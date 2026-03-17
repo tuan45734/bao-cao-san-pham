@@ -37,6 +37,25 @@ h1 i {
     color: #ff9900;
 }
 
+.header1 {
+    background: linear-gradient(135deg, #667eea 0%, #ff7300 100%);
+    color: white;
+    padding: 30px;
+    border-radius: 15px;
+    margin-bottom: 30px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+}
+
+.header1 h1 {
+     color: #ffffff;
+    font-size: 2.5em;
+    margin-bottom: 10px;
+}
+
+.header1 p {
+    font-size: 1.1em;
+    opacity: 0.9;
+}
 .filter-section {
     background: #f8f9fa;
     border-radius: 15px;
