@@ -1,137 +1,185 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dữ liệu Bill - MobiWork</title>
-    <style>
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            margin: 0;
-            padding: 20px;
-            background-color: #f5f5f5;
-        }
-        .container {
-            max-width: 1400px;
-            margin: 0 auto;
-            background-color: white;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-        h1 {
-            color: #333;
-            margin-top: 0;
-            border-bottom: 2px solid #007bff;
-            padding-bottom: 10px;
-        }
-        .info {
-            background-color: #e8f4fd;
-            padding: 15px;
-            border-radius: 5px;
-            margin-bottom: 20px;
-            border-left: 4px solid #007bff;
-        }
-        .summary {
-            background-color: #f0f0f0;
-            padding: 15px;
-            border-radius: 5px;
-            margin-bottom: 20px;
-            font-weight: bold;
-            display: flex;
-            gap: 20px;
-        }
-        .error {
-            color: #721c24;
-            background-color: #f8d7da;
-            border: 1px solid #f5c6cb;
-            padding: 10px;
-            border-radius: 5px;
-            margin-bottom: 20px;
-            display: none;
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            background-color: white;
-            font-size: 14px;
-        }
-        th {
-            background-color: #007bff;
-            color: white;
-            padding: 12px;
-            text-align: left;
-            position: sticky;
-            top: 0;
-            z-index: 10;
-        }
-        td {
-            padding: 10px;
-            border-bottom: 1px solid #ddd;
-        }
-        tr:hover {
-            background-color: #f5f5f5;
-        }
-        .loading {
-            text-align: center;
-            padding: 40px;
-            color: #666;
-        }
-        .badge {
-            background-color: #28a745;
-            color: white;
-            padding: 3px 8px;
-            border-radius: 3px;
-            font-size: 12px;
-            display: inline-block;
-        }
-        .table-info {
-            background-color: #fff3cd;
-            border: 1px solid #ffeeba;
-            color: #856404;
-            padding: 10px;
-            margin-bottom: 10px;
-            border-radius: 5px;
-        }
-        .download-btn {
-            background-color: #28a745;
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 16px;
-        }
-        .download-btn:hover {
-            background-color: #218838;
-        }
-        @media (max-width: 768px) {
-            table {
-                font-size: 12px;
-            }
-            th, td {
-                padding: 6px;
-            }
-        }
-    </style>
+    <title>Báo cáo doanh thu theo ngành hàng</title>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+
+    <link rel="stylesheet" href="styles.css">
 </head>
+
 <body>
     <div class="container">
-        <h1>📋 Dữ liệu Bill - MobiWork</h1>
-        
-        <div class="info">
-            <p id="last-updated">
-                <strong>🕒 Lần cập nhật cuối:</strong> Đang tải...<br>
-                <strong>📊 Tổng số bản ghi:</strong> Đang tải...
-            </p>
-            <p class="badge">⏰ Tự động cập nhật lúc 3:00 sáng hàng ngày (305 trang, mỗi trang 1000 bản ghi)</p>
+        <div class="header">
+            <h1>
+                <i class="fas fa-chart-pie"></i>
+                Báo cáo doanh thu theo ngành hàng
+            </h1>
+
+            <div class="filter-section">
+                <div class="date-range">
+                    <div class="date-input">
+                        <label><i class="far fa-calendar-alt"></i> Từ ngày</label>
+                        <input type="date" id="fromDate" value="2026-01-01">
+                    </div>
+                    <div class="date-input">
+                        <label><i class="far fa-calendar-alt"></i> Đến ngày</label>
+                        <input type="date" id="toDate" value="2026-02-28">
+                    </div>
+                    <button class="search-btn" onclick="window.app.fetchAllData()" id="searchBtn">
+                        <i class="fas fa-search"></i>
+                        Xem báo cáo
+                    </button>
+                </div>
+
+                <div class="page-info" id="pageInfo" style="display: none;">
+                    <i class="fas fa-spinner fa-spin"></i>
+                    <span>Đang tải trang: <span id="loadedPages">0</span> / <span id="totalPages">?</span></span>
+                </div>
+            </div>
+
+            <div class="error-message" id="errorMessage">
+                <i class="fas fa-exclamation-circle"></i>
+                <span id="errorText"></span>
+            </div>
+
+            <div class="kv-filter-container">
+                <div class="kv-filter-label">
+                    <i class="fas fa-filter"></i>
+                    <span>Lọc theo khu vực:</span>
+                </div>
+                <div class="kv-filter-buttons">
+                    <button class="kv-btn active" data-kv="all">Tất cả</button>
+                    <button class="kv-btn" data-kv="KV1">KV1</button>
+                    <button class="kv-btn" data-kv="KV2">KV2</button>
+                    <button class="kv-btn" data-kv="KV3">KV3</button>
+                    <button class="kv-btn" data-kv="KV4">KV4</button>
+                    <button class="kv-btn" data-kv="KV5">KV5</button>
+                    <button class="kv-btn" data-kv="KV6">KV6</button>
+                </div>
+            </div>
+
+            <div class="category-cards" id="categoryCards" style="display: none;">
+                <div class="category-card" id="cardBimQuay" data-category="Bim Quẩy"
+                    style="border-top-color: #f59e0b; cursor: pointer;">
+                    <div class="category-card-header">
+                        <i class="fas fa-cookie-bite" style="color: #f59e0b"></i>
+                        <span class="category-card-name">Bim Quẩy</span>
+                    </div>
+                    <div class="category-card-value" id="bimQuayRevenue">0</div>
+                    <div class="category-card-quantity" id="bimQuayQuantity">0 gói</div>
+                    <div class="category-card-orders" id="bimQuayOrders">0 đơn hàng</div>
+                </div>
+
+                <div class="category-card" id="cardCaCom" data-category="Cá cơm"
+                    style="border-top-color: #3b82f6; cursor: pointer;">
+                    <div class="category-card-header">
+                        <i class="fas fa-fish" style="color: #3b82f6"></i>
+                        <span class="category-card-name">Cá cơm</span>
+                    </div>
+                    <div class="category-card-value" id="caComRevenue">0</div>
+                    <div class="category-card-quantity" id="caComQuantity">0 gói</div>
+                    <div class="category-card-orders" id="caComOrders">0 đơn hàng</div>
+                </div>
+
+                <div class="category-card" id="cardChanGa" data-category="Chân gà"
+                    style="border-top-color: #10b981; cursor: pointer;">
+                    <div class="category-card-header">
+                        <i class="fas fa-drumstick-bite" style="color: #10b981"></i>
+                        <span class="category-card-name">Chân gà</span>
+                    </div>
+                    <div class="category-card-value" id="chanGaRevenue">0</div>
+                    <div class="category-card-quantity" id="chanGaQuantity">0 gói</div>
+                    <div class="category-card-orders" id="chanGaOrders">0 đơn hàng</div>
+                </div>
+
+                <div class="category-card" id="cardHangUot" data-category="Hàng Ướt"
+                    style="border-top-color: #8b5cf6; cursor: pointer;">
+                    <div class="category-card-header">
+                        <i class="fas fa-droplet" style="color: #8b5cf6"></i>
+                        <span class="category-card-name">Hàng Ướt</span>
+                    </div>
+                    <div class="category-card-value" id="hangUotRevenue">0</div>
+                    <div class="category-card-quantity" id="hangUotQuantity">0 gói</div>
+                    <div class="category-card-orders" id="hangUotOrders">0 đơn hàng</div>
+                </div>
+            </div>
         </div>
-        
-        <div id="summary" class="summary"></div>
-        <div id="error" class="error"></div>
-        <div id="data-container" class="loading">Đang tải dữ liệu...</div>
+
+        <div class="chart-container" id="overviewRevenueChartContainer" style="display: none;">
+            <div class="chart-header">
+                <div class="chart-title">
+                    <i class="fas fa-chart-bar"></i>
+                    <span>Doanh thu theo ngành hàng</span>
+                </div>
+            </div>
+            <div class="chart-wrapper">
+                <canvas id="overviewRevenueChart"></canvas>
+            </div>
+        </div>
+
+        <div class="chart-container" id="overviewQuantityChartContainer" style="display: none;">
+            <div class="chart-header">
+                <div class="chart-title">
+                    <i class="fas fa-chart-bar"></i>
+                    <span>Số lượng theo ngành hàng</span>
+                </div>
+            </div>
+            <div class="chart-wrapper">
+                <canvas id="overviewQuantityChart"></canvas>
+            </div>
+        </div>
+
+        <div class="chart-container" id="detailRevenueChartContainer" style="display: none;">
+            <div class="chart-header">
+                <div class="chart-title">
+                    <i class="fas fa-chart-bar"></i>
+                    <span id="detailRevenueChartTitle">Chi tiết sản phẩm - Doanh thu</span>
+                </div>
+                <div class="chart-actions">
+                    <button class="back-btn" id="backBtn">
+                        <i class="fas fa-arrow-left"></i>
+                        Quay lại tổng quan
+                    </button>
+                </div>
+            </div>
+            <div class="chart-wrapper">
+                <canvas id="detailRevenueChart"></canvas>
+            </div>
+        </div>
+
+        <div class="chart-container" id="detailQuantityChartContainer" style="display: none;">
+            <div class="chart-header">
+                <div class="chart-title">
+                    <i class="fas fa-chart-bar"></i>
+                    <span id="detailQuantityChartTitle">Chi tiết sản phẩm - Số lượng</span>
+                </div>
+                <div class="chart-actions">
+                </div>
+            </div>
+            <div class="chart-wrapper">
+                <canvas id="detailQuantityChart"></canvas>
+            </div>
+        </div>
     </div>
-    
-    <script src="script.js"></script>
+
+    <div class="loading-overlay" id="loadingOverlay">
+        <i class="fas fa-spinner fa-spin"></i>
+        <span>Đang tải dữ liệu...</span>
+    </div>
+
+    <script src="config.js"></script>
+    <script src="utils.js"></script>
+    <script src="product-categories.js"></script>
+    <script src="npp-kv-map.js"></script>
+    <script src="api.js"></script>
+    <script src="app.js"></script>
+    <script src="chart.js"></script>
 </body>
+
 </html>
