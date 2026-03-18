@@ -82,30 +82,33 @@ const ChartManager = {
                     legend: {
                         display: false
                     },
-                    datalabels: {
-                        display: true,
-                        anchor: 'end',
-                        align: 'right',
-                        offset: 5,
-                        formatter: (value) => {
-                            return Utils.formatCurrency(value);
-                        },
-                        font: {
-                            weight: 'bold',
-                            size: 12
-                        },
-                        color: '#000',
-                        backgroundColor: 'rgba(255, 255, 255, 0.9)',
-                        padding: {
-                            left: 6,
-                            right: 6,
-                            top: 3,
-                            bottom: 3
-                        },
-                        borderRadius: 4,
-                        borderWidth: 1,
-                        borderColor: '#ddd'
-                    }
+        datalabels: {
+    display: true,
+    anchor: 'end',
+    align: 'right',
+    offset: 5,
+    formatter: (value, context) => {
+        // Tính tổng doanh thu
+        const total = context.chart.data.datasets[0].data.reduce((a, b) => a + b, 0);
+        const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : 0;
+        return `${Utils.formatCurrency(value)} (${percentage}%)`;
+    },
+    font: {
+        weight: 'bold',
+        size: 12
+    },
+    color: '#000',
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    padding: {
+        left: 6,
+        right: 6,
+        top: 3,
+        bottom: 3
+    },
+    borderRadius: 4,
+    borderWidth: 1,
+    borderColor: '#ddd'
+},
                 },
                 scales: {
                     x: {
@@ -230,30 +233,33 @@ const ChartManager = {
                     legend: {
                         display: false
                     },
-                    datalabels: {
-                        display: true,
-                        anchor: 'end',
-                        align: 'right',
-                        offset: 5,
-                        formatter: (value) => {
-                            return Utils.formatNumber(value) + ' gói';
-                        },
-                        font: {
-                            weight: 'bold',
-                            size: 12
-                        },
-                        color: '#000',
-                        backgroundColor: 'rgba(255, 255, 255, 0.9)',
-                        padding: {
-                            left: 6,
-                            right: 6,
-                            top: 3,
-                            bottom: 3
-                        },
-                        borderRadius: 4,
-                        borderWidth: 1,
-                        borderColor: '#ddd'
-                    }
+                datalabels: {
+    display: true,
+    anchor: 'end',
+    align: 'right',
+    offset: 5,
+    formatter: (value, context) => {
+        // Tính tổng số lượng
+        const total = context.chart.data.datasets[0].data.reduce((a, b) => a + b, 0);
+        const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : 0;
+        return `${Utils.formatNumber(value)} gói (${percentage}%)`;
+    },
+    font: {
+        weight: 'bold',
+        size: 12
+    },
+    color: '#000',
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    padding: {
+        left: 6,
+        right: 6,
+        top: 3,
+        bottom: 3
+    },
+    borderRadius: 4,
+    borderWidth: 1,
+    borderColor: '#ddd'
+},
                 },
                 scales: {
                     x: {
@@ -416,30 +422,33 @@ const ChartManager = {
                     legend: {
                         display: false
                     },
-                    datalabels: {
-                        display: true,
-                        anchor: 'end',
-                        align: 'right',
-                        offset: 5,
-                        formatter: (value) => {
-                            return Utils.formatCurrency(value);
-                        },
-                        font: {
-                            weight: 'bold',
-                            size: 11
-                        },
-                        color: '#000',
-                        backgroundColor: 'rgba(255, 255, 255, 0.9)',
-                        padding: {
-                            left: 4,
-                            right: 4,
-                            top: 2,
-                            bottom: 2
-                        },
-                        borderRadius: 3,
-                        borderWidth: 1,
-                        borderColor: '#ddd'
-                    }
+                   datalabels: {
+    display: true,
+    anchor: 'end',
+    align: 'right',
+    offset: 5,
+    formatter: (value, context) => {
+        // Tính tổng doanh thu của category
+        const total = context.chart.data.datasets[0].data.reduce((a, b) => a + b, 0);
+        const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : 0;
+        return `${Utils.formatCurrency(value)} (${percentage}%)`;
+    },
+    font: {
+        weight: 'bold',
+        size: 11
+    },
+    color: '#000',
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    padding: {
+        left: 6,
+        right: 6,
+        top: 3,
+        bottom: 3
+    },
+    borderRadius: 4,
+    borderWidth: 1,
+    borderColor: '#ddd'
+},
                 },
                 scales: {
                     x: {
@@ -592,30 +601,33 @@ const ChartManager = {
                     legend: {
                         display: false
                     },
-                    datalabels: {
-                        display: true,
-                        anchor: 'end',
-                        align: 'right',
-                        offset: 5,
-                        formatter: (value) => {
-                            return Utils.formatNumber(value) + ' gói';
-                        },
-                        font: {
-                            weight: 'bold',
-                            size: 11
-                        },
-                        color: '#000',
-                        backgroundColor: 'rgba(255, 255, 255, 0.9)',
-                        padding: {
-                            left: 4,
-                            right: 4,
-                            top: 2,
-                            bottom: 2
-                        },
-                        borderRadius: 3,
-                        borderWidth: 1,
-                        borderColor: '#ddd'
-                    }
+     datalabels: {
+    display: true,
+    anchor: 'end',
+    align: 'right',
+    offset: 5,
+    formatter: (value, context) => {
+        // Tính tổng số lượng của category
+        const total = context.chart.data.datasets[0].data.reduce((a, b) => a + b, 0);
+        const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : 0;
+        return `${Utils.formatNumber(value)} gói (${percentage}%)`;
+    },
+    font: {
+        weight: 'bold',
+        size: 11
+    },
+    color: '#000',
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    padding: {
+        left: 6,
+        right: 6,
+        top: 3,
+        bottom: 3
+    },
+    borderRadius: 4,
+    borderWidth: 1,
+    borderColor: '#ddd'
+},
                 },
                 scales: {
                     x: {

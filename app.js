@@ -28,10 +28,20 @@ const App = {
         this.setupKVFilterListeners();
     },
 
-    setDefaultDates() {
-        document.getElementById('fromDate').valueAsDate = new Date('2026-01-01');
-        document.getElementById('toDate').valueAsDate = new Date('2026-02-28');
-    },
+setDefaultDates() {
+    const today = new Date();
+    const fromDate = document.getElementById('fromDate');
+    const toDate = document.getElementById('toDate');
+    
+  
+    const year = today.getFullYear();
+    const month = String(today.getMonth() + 1).padStart(2, '0');
+    const day = String(today.getDate()).padStart(2, '0');
+    const todayStr = `${year}-${month}-${day}`;
+    
+    fromDate.value = todayStr;
+    toDate.value = todayStr;
+},
 
     setupEventListeners() {
         document.getElementById('cardBimQuay').addEventListener('click', () => this.showCategoryDetail('Bim Quẩy'));
