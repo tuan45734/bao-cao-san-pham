@@ -426,3 +426,28 @@ h1 i {
         justify-content: center;
     }
 }
+/* Page info */
+.page-info {
+    background: linear-gradient(135deg, #667eea20 0%, #ff730020 100%);
+    padding: 15px 25px;
+    border-radius: 50px;
+    margin: 15px 0;
+    font-size: 15px;
+    color: #333;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    border: 2px solid #ff7300;
+    box-shadow: 0 4px 15px rgba(255,115,0,0.2);
+    font-weight: 600;
+}
+
+.page-info i {
+    color: #ff7300;
+    font-size: 18px;
+}
+
+.page-info span {
+    font-weight: 700;
+    color: #ff7300;
+}

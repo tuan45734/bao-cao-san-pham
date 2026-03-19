@@ -1,8 +1,8 @@
 
 const App = {
-    productStats: new Map(), 
-    productKVStats: new Map(), 
-    categoryStats: new Map(), 
+    productStats: new Map(),
+    productKVStats: new Map(),
+    categoryStats: new Map(),
     categoryKVStats: new Map(),
     orderStats: new Map(),
     totalFilteredOrders: 0,
@@ -26,21 +26,38 @@ const App = {
         this.setDefaultDates();
         this.setupEventListeners();
         this.setupKVFilterListeners();
+
+        setTimeout(() => {
+            this.fetchAllData();
+        }, 100);
     },
 
-setDefaultDates() {
-    const today = new Date();
+   setDefaultDates() {
     const fromDate = document.getElementById('fromDate');
     const toDate = document.getElementById('toDate');
     
-  
-    const year = today.getFullYear();
-    const month = String(today.getMonth() + 1).padStart(2, '0');
-    const day = String(today.getDate()).padStart(2, '0');
-    const todayStr = `${year}-${month}-${day}`;
+    const today = new Date();
     
-    fromDate.value = todayStr;
-    toDate.value = todayStr;
+    // Format thủ công YYYY-MM-DD
+    const formatDate = (date) => {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    };
+    
+    // Ngày đầu tháng hiện tại
+    const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
+    const firstDayStr = formatDate(firstDay);
+    
+    // Ngày cuối tháng hiện tại
+    const lastDay = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+    const lastDayStr = formatDate(lastDay);
+    
+    fromDate.value = firstDayStr;
+    toDate.value = lastDayStr;
+    
+    console.log(`Mặc định: Từ ${firstDayStr} đến ${lastDayStr}`);
 },
 
     setupEventListeners() {
@@ -48,7 +65,7 @@ setDefaultDates() {
         document.getElementById('cardCaCom').addEventListener('click', () => this.showCategoryDetail('Cá cơm'));
         document.getElementById('cardChanGa').addEventListener('click', () => this.showCategoryDetail('Chân gà'));
         document.getElementById('cardHangUot').addEventListener('click', () => this.showCategoryDetail('Hàng Ướt'));
-        
+
         document.getElementById('backBtn').addEventListener('click', () => this.showOverviewChart());
     },
 
@@ -60,26 +77,26 @@ setDefaultDates() {
             });
         });
     },
-filterByKV(kv) {
-    this.currentKV = kv;
-    
-    // Cập nhật active state cho các nút
-    document.querySelectorAll('.kv-filter-buttons .kv-btn').forEach(btn => {
-        if (btn.dataset.kv === kv) {
-            btn.classList.add('active');
-        } else {
-            btn.classList.remove('active');
-        }
-    });
+    filterByKV(kv) {
+        this.currentKV = kv;
 
-    // Cập nhật lại giao diện dựa trên view hiện tại
-    if (this.currentView === 'overview') {
-        this.updateCategoryCards();
-        ChartManager.createOverviewCharts(this.getFilteredCategoryStats());
-    } else if (this.currentView === 'detail' && this.currentCategory) {
-        this.showCategoryDetail(this.currentCategory);
-    }
-},
+        // Cập nhật active state cho các nút
+        document.querySelectorAll('.kv-filter-buttons .kv-btn').forEach(btn => {
+            if (btn.dataset.kv === kv) {
+                btn.classList.add('active');
+            } else {
+                btn.classList.remove('active');
+            }
+        });
+
+        // Cập nhật lại giao diện dựa trên view hiện tại
+        if (this.currentView === 'overview') {
+            this.updateCategoryCards();
+            ChartManager.createOverviewCharts(this.getFilteredCategoryStats());
+        } else if (this.currentView === 'detail' && this.currentCategory) {
+            this.showCategoryDetail(this.currentCategory);
+        }
+    },
 
     getKVFromBill(bill) {
         const tenNPP = bill.ma_nhom || bill.ten_nhom;
@@ -88,7 +105,7 @@ filterByKV(kv) {
 
     getFilteredCategoryStats() {
         const filteredStats = new Map();
-        
+
         if (this.currentKV === 'all') {
             return this.categoryStats;
         } else {
@@ -112,13 +129,13 @@ filterByKV(kv) {
                 }
             });
         }
-        
+
         return filteredStats;
     },
 
     getFilteredProductStats(categoryName) {
         const filteredProducts = [];
-        
+
         if (this.currentKV === 'all') {
             Array.from(this.productStats.values()).forEach(product => {
                 if (product.category === categoryName) {
@@ -132,7 +149,7 @@ filterByKV(kv) {
                 }
             });
         }
-        
+
         if (this.currentKV !== 'all') {
             const productMap = new Map();
             filteredProducts.forEach(product => {
@@ -152,11 +169,11 @@ filterByKV(kv) {
                     });
                 }
             });
-            
+
             return Array.from(productMap.values())
                 .sort((a, b) => (b.revenue || 0) - (a.revenue || 0));
         }
-        
+
         return filteredProducts.sort((a, b) => (b.revenue || 0) - (a.revenue || 0));
     },
 
@@ -176,31 +193,31 @@ filterByKV(kv) {
 
     processPageData(pageData) {
         if (!Array.isArray(pageData)) return;
-        
+
         pageData.forEach(bill => {
             if (!bill) return;
-            
+
             const kv = this.getKVFromBill(bill);
             const sanPham = Array.isArray(bill.san_pham) ? bill.san_pham : [];
             let hasValidCategory = false;
             const categoriesInBill = new Set();
-            
+
             sanPham.forEach(sp => {
                 if (!sp || !sp.ma_sp) return;
-                
+
                 const category = this.getCategory(sp.ma_sp);
                 if (!category) return;
-                
+
                 const revenue = Utils.safeNumber(sp.thanh_tien);
                 const quantity = Utils.safeNumber(sp.so_luong);
                 const unit = sp.ma_dvt || 'Gói';
                 const rate = this.getConversionRate(sp.ma_sp);
-                
+
                 hasValidCategory = true;
                 categoriesInBill.add(category.name);
-                
+
                 const goiFromThisOrder = unit === 'Thùng' ? quantity * rate : quantity;
-                
+
                 const productKVKey = `${sp.ma_sp}_${kv}`;
                 if (this.productKVStats.has(productKVKey)) {
                     const stats = this.productKVStats.get(productKVKey);
@@ -216,7 +233,7 @@ filterByKV(kv) {
                         kv: kv
                     });
                 }
-                
+
                 const categoryKVKey = `${category.name}_${kv}`;
                 if (this.categoryKVStats.has(categoryKVKey)) {
                     const catStats = this.categoryKVStats.get(categoryKVKey);
@@ -233,7 +250,7 @@ filterByKV(kv) {
                         totalGoi: goiFromThisOrder
                     });
                 }
-                
+
                 if (this.productStats.has(sp.ma_sp)) {
                     const stats = this.productStats.get(sp.ma_sp);
                     stats.totalGoi += goiFromThisOrder;
@@ -247,7 +264,7 @@ filterByKV(kv) {
                         revenue: revenue
                     });
                 }
-                
+
                 if (this.categoryStats.has(category.name)) {
                     const catStats = this.categoryStats.get(category.name);
                     catStats.revenue += revenue;
@@ -263,7 +280,7 @@ filterByKV(kv) {
                     });
                 }
             });
-            
+
             if (hasValidCategory) {
                 this.totalFilteredOrders++;
                 categoriesInBill.forEach(catName => {
@@ -288,15 +305,15 @@ filterByKV(kv) {
     updateCategoryCards() {
         const categories = ['Bim Quẩy', 'Cá cơm', 'Chân gà', 'Hàng Ướt'];
         const filteredStats = this.getFilteredCategoryStats();
-        
+
         categories.forEach(catName => {
             const catStats = filteredStats.get(catName) || { revenue: 0, totalGoi: 0 };
             const orders = this.getOrderCountForCategory(catName);
-            
+
             const revenueId = this.getRevenueId(catName);
             const quantityId = this.getQuantityId(catName);
             const ordersId = this.getOrdersId(catName);
-            
+
             if (revenueId) {
                 document.getElementById(revenueId).textContent = Utils.formatCurrency(Utils.safeNumber(catStats.revenue));
             }
@@ -354,7 +371,7 @@ filterByKV(kv) {
 
     async fetchAllData() {
         if (this.isFetching) return;
-        
+
         const fromDate = document.getElementById('fromDate').value;
         const toDate = document.getElementById('toDate').value;
 
@@ -362,10 +379,10 @@ filterByKV(kv) {
 
         this.isFetching = true;
         const searchBtn = document.getElementById('searchBtn');
-        
+
         searchBtn.disabled = true;
         searchBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Đang lấy dữ liệu...';
-        
+
         this.productStats.clear();
         this.productKVStats.clear();
         this.categoryStats.clear();
@@ -377,11 +394,20 @@ filterByKV(kv) {
         this.currentCategory = null;
         this.currentKV = 'all';
 
+        // Reset và hiển thị page info
+        const loadedPagesSpan = document.getElementById('loadedPages');
+        const totalPagesSpan = document.getElementById('totalPages');
+        const pageInfo = document.getElementById('pageInfo');
+
+        if (loadedPagesSpan) loadedPagesSpan.textContent = '0';
+        if (totalPagesSpan) totalPagesSpan.textContent = '?';
+        if (pageInfo) pageInfo.style.display = 'flex'; // Hiện thông báo đang load
+
         document.getElementById('overviewRevenueChartContainer').style.display = 'none';
-document.getElementById('overviewQuantityChartContainer').style.display = 'none';
-document.getElementById('detailRevenueChartContainer').style.display = 'none';
-document.getElementById('detailQuantityChartContainer').style.display = 'none';
-        
+        document.getElementById('overviewQuantityChartContainer').style.display = 'none';
+        document.getElementById('detailRevenueChartContainer').style.display = 'none';
+        document.getElementById('detailQuantityChartContainer').style.display = 'none';
+
         document.querySelectorAll('.kv-filter-buttons .kv-btn').forEach(btn => {
             if (btn.dataset.kv === 'all') {
                 btn.classList.add('active');
@@ -389,34 +415,40 @@ document.getElementById('detailQuantityChartContainer').style.display = 'none';
                 btn.classList.remove('active');
             }
         });
-        
+
         Utils.showLoading();
 
         try {
             const fromDateStr = Utils.formatDateForAPI(fromDate);
             const toDateStr = Utils.formatDateForAPI(toDate);
-            
+
             let pageNumber = 1;
             let hasMoreData = true;
-            
+
             const firstPageData = await API.fetchPage(1, fromDateStr, toDateStr);
-            
+
             if (firstPageData && firstPageData.status && Array.isArray(firstPageData.data) && firstPageData.data.length > 0) {
                 this.processPageData(firstPageData.data);
-                
+
+                // Cập nhật số trang đã load
+                if (loadedPagesSpan) loadedPagesSpan.textContent = '1';
+
                 if (firstPageData.data.length === CONFIG.PAGE_SIZE) {
                     pageNumber = 2;
-                    
+
                     while (hasMoreData) {
                         try {
                             console.log(`Đang lấy trang ${pageNumber}...`);
                             await Utils.sleep(CONFIG.PAGE_DELAY);
-                            
+
                             const data = await API.fetchPage(pageNumber, fromDateStr, toDateStr);
-                            
+
                             if (data && data.status && Array.isArray(data.data) && data.data.length > 0) {
                                 this.processPageData(data.data);
-                                
+
+                                // Cập nhật số trang đã load
+                                if (loadedPagesSpan) loadedPagesSpan.textContent = pageNumber;
+
                                 if (data.data.length < CONFIG.PAGE_SIZE) {
                                     hasMoreData = false;
                                     console.log('Đã lấy hết dữ liệu!');
@@ -426,7 +458,7 @@ document.getElementById('detailQuantityChartContainer').style.display = 'none';
                             } else {
                                 hasMoreData = false;
                             }
-                            
+
                         } catch (error) {
                             console.error(`Lỗi trang ${pageNumber}:`, error);
                             Utils.showError(`Lỗi khi lấy trang ${pageNumber}: ${error.message}`);
@@ -440,14 +472,22 @@ document.getElementById('detailQuantityChartContainer').style.display = 'none';
                 this.updateCategoryCards();
                 document.getElementById('categoryCards').style.display = 'grid';
                 this.showOverviewChart();
+
+                // Ẩn page info sau khi hoàn tất
+                if (pageInfo) {
+                    setTimeout(() => {
+                        pageInfo.style.display = 'none';
+                    }, 500); // Ẩn sau 2 giây để người dùng kịp nhìn thấy tổng số trang
+                }
             } else {
                 Utils.showError('Không có dữ liệu trong khoảng thời gian này');
-                this.hidePageInfo();
+                if (pageInfo) pageInfo.style.display = 'none';
             }
 
         } catch (error) {
             console.error('Lỗi tổng thể:', error);
             Utils.showError(`Có lỗi xảy ra: ${error.message}`);
+            if (pageInfo) pageInfo.style.display = 'none';
         } finally {
             this.isFetching = false;
             Utils.hideLoading();
@@ -456,45 +496,45 @@ document.getElementById('detailQuantityChartContainer').style.display = 'none';
         }
     },
 
-  showOverviewChart() {
-    this.currentView = 'overview';
-    this.currentCategory = null;
-    
-    document.querySelectorAll('.category-card').forEach(card => {
-        card.classList.remove('active');
-    });
-    
-    document.getElementById('overviewRevenueChartContainer').style.display = 'block';
-    document.getElementById('overviewQuantityChartContainer').style.display = 'block';
-    document.getElementById('detailRevenueChartContainer').style.display = 'none';
-    document.getElementById('detailQuantityChartContainer').style.display = 'none';
-    
-    ChartManager.createOverviewCharts(this.getFilteredCategoryStats());
-},
+    showOverviewChart() {
+        this.currentView = 'overview';
+        this.currentCategory = null;
 
-   showCategoryDetail(categoryName) {
-    this.currentView = 'detail';
-    this.currentCategory = categoryName;
-    
-    document.querySelectorAll('.category-card').forEach(card => {
-        card.classList.remove('active');
-        if (card.dataset.category === categoryName) {
-            card.classList.add('active');
-        }
-    });
-    
-    document.getElementById('overviewRevenueChartContainer').style.display = 'none';
-    document.getElementById('overviewQuantityChartContainer').style.display = 'none';
-    document.getElementById('detailRevenueChartContainer').style.display = 'block';
-    document.getElementById('detailQuantityChartContainer').style.display = 'block';
-    
-    const kvText = this.currentKV === 'all' ? 'Tất cả KV' : this.currentKV;
-    document.getElementById('detailRevenueChartTitle').textContent = `Sản phẩm - ${categoryName} (Doanh thu - ${kvText})`;
-    document.getElementById('detailQuantityChartTitle').textContent = `Sản phẩm - ${categoryName} (Số lượng - ${kvText})`;
-    
-    const products = this.getFilteredProductStats(categoryName);
-    ChartManager.createDetailCharts(categoryName, products);
-},
+        document.querySelectorAll('.category-card').forEach(card => {
+            card.classList.remove('active');
+        });
+
+        document.getElementById('overviewRevenueChartContainer').style.display = 'block';
+        document.getElementById('overviewQuantityChartContainer').style.display = 'block';
+        document.getElementById('detailRevenueChartContainer').style.display = 'none';
+        document.getElementById('detailQuantityChartContainer').style.display = 'none';
+
+        ChartManager.createOverviewCharts(this.getFilteredCategoryStats());
+    },
+
+    showCategoryDetail(categoryName) {
+        this.currentView = 'detail';
+        this.currentCategory = categoryName;
+
+        document.querySelectorAll('.category-card').forEach(card => {
+            card.classList.remove('active');
+            if (card.dataset.category === categoryName) {
+                card.classList.add('active');
+            }
+        });
+
+        document.getElementById('overviewRevenueChartContainer').style.display = 'none';
+        document.getElementById('overviewQuantityChartContainer').style.display = 'none';
+        document.getElementById('detailRevenueChartContainer').style.display = 'block';
+        document.getElementById('detailQuantityChartContainer').style.display = 'block';
+
+        const kvText = this.currentKV === 'all' ? 'Tất cả KV' : this.currentKV;
+        document.getElementById('detailRevenueChartTitle').textContent = `Sản phẩm - ${categoryName} (Doanh thu - ${kvText})`;
+        document.getElementById('detailQuantityChartTitle').textContent = `Sản phẩm - ${categoryName} (Số lượng - ${kvText})`;
+
+        const products = this.getFilteredProductStats(categoryName);
+        ChartManager.createDetailCharts(categoryName, products);
+    },
 };
 
 document.addEventListener('DOMContentLoaded', () => {
