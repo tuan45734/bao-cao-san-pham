@@ -77,26 +77,36 @@ const App = {
             });
         });
     },
-    filterByKV(kv) {
-        this.currentKV = kv;
 
-        // Cập nhật active state cho các nút
-        document.querySelectorAll('.kv-filter-buttons .kv-btn').forEach(btn => {
-            if (btn.dataset.kv === kv) {
-                btn.classList.add('active');
-            } else {
-                btn.classList.remove('active');
-            }
-        });
+filterByKV(kv) {
+    this.currentKV = kv;
 
-        // Cập nhật lại giao diện dựa trên view hiện tại
-        if (this.currentView === 'overview') {
-            this.updateCategoryCards();
-            ChartManager.createOverviewCharts(this.getFilteredCategoryStats());
-        } else if (this.currentView === 'detail' && this.currentCategory) {
-            this.showCategoryDetail(this.currentCategory);
+    // Cập nhật active state cho các nút
+    document.querySelectorAll('.kv-filter-buttons .kv-btn').forEach(btn => {
+        if (btn.dataset.kv === kv) {
+            btn.classList.add('active');
+        } else {
+            btn.classList.remove('active');
         }
-    },
+    });
+
+    // LUÔN CẬP NHẬT category cards bất kể view hiện tại
+    this.updateCategoryCards();
+
+    // Cập nhật lại giao diện dựa trên view hiện tại
+    if (this.currentView === 'overview') {
+        ChartManager.createOverviewCharts(this.getFilteredCategoryStats());
+    } else if (this.currentView === 'detail' && this.currentCategory) {
+        // Cập nhật lại chi tiết sản phẩm với bộ lọc mới
+        const products = this.getFilteredProductStats(this.currentCategory);
+        ChartManager.createDetailCharts(this.currentCategory, products);
+        
+        // Cập nhật tiêu đề biểu đồ
+        const kvText = this.currentKV === 'all' ? 'Tất cả KV' : this.currentKV;
+        document.getElementById('detailRevenueChartTitle').textContent = `Sản phẩm - ${this.currentCategory} (Doanh thu - ${kvText})`;
+        document.getElementById('detailQuantityChartTitle').textContent = `Sản phẩm - ${this.currentCategory} (Số lượng - ${kvText})`;
+    }
+},
 
     getKVFromBill(bill) {
         const tenNPP = bill.ma_nhom || bill.ten_nhom;
