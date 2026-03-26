@@ -55,7 +55,7 @@ async fetchWithRetry(url, retryCount = 0) {
 
     buildUrl(pageNumber, fromDate, toDate) {
         const params = new URLSearchParams({
-            'trang_thai': 'Đã xuất hàng',
+           
             'tu_ngay': fromDate,
             'den_ngay': toDate,
             'kieu_ngay': ' ',

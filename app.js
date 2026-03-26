@@ -2,8 +2,10 @@
 const App = {
     productStats: new Map(),
     productKVStats: new Map(),
+    productNPPStats: new Map(), // Thêm map lưu theo NPP
     categoryStats: new Map(),
     categoryKVStats: new Map(),
+    categoryNPPStats: new Map(), // Thêm map lưu theo NPP
     orderStats: new Map(),
     totalFilteredOrders: 0,
     isFetching: false,
@@ -11,55 +13,89 @@ const App = {
     currentView: 'overview',
     currentCategory: null,
     currentKV: 'all',
+    currentNPP: 'all',
 
     CONVERSION_RATES: {
         'HH00055': 120, 'HH00056': 120, 'HH00057': 120, 'HH00058': 120, 'HH00059': 120,
         'HH00062': 60, 'HH00063': 120, 'HH00065': 120, 'HH00067': 120, 'HH00069': 120,
         'HH00071': 120, 'HH00072': 60, 'HH00073': 60, 'HH00101': 120, 'HH00019': 200,
-        'HH00083': 200, 'HH00015': 120, 'HH00029': 200, 'HH00033': 200, 'HH00099': 90,
-        'HH00100': 120, 'HH00105': 100, 'HH00074': 300, 'HH00075': 60, 'HH00077': 300,
+        'HH00083': 200, 'HH00015': 120, 'HH00029': 200, 'HH00033': 200, 'HH00099': 40,
+        'HH00100': 40, 'HH00105': 100, 'HH00074': 300, 'HH00075': 60, 'HH00077': 300,
         'HH00078': 300, 'HH00079': 300, 'HH00080': 300
     },
-
+NPP_NAME_MAPPING: new Map([
+        ['NPP Tân Thúy', 'NPP Tân Thuý']
+    ]),
+    
+    normalizeNPPName(tenNPP) {
+        if (!tenNPP) return tenNPP;
+        return this.NPP_NAME_MAPPING.get(tenNPP) || tenNPP;
+    },
+    
     init() {
         console.log('App initialized');
         this.setDefaultDates();
         this.setupEventListeners();
         this.setupKVFilterListeners();
+        this.setupNPPFilterListeners(); // Thêm listener cho NPP
 
-        setTimeout(() => {
-            this.fetchAllData();
-        }, 100);
+        // setTimeout(() => {
+        //     this.fetchAllData();
+        // }, 100);
     },
+    setupNPPFilterListeners() {
+        const nppSelect = document.getElementById('nppSelect');
+        if (nppSelect) {
+            nppSelect.addEventListener('change', (e) => {
+                this.filterByNPP(e.target.value);
+            });
+        }
+    },
+    setDefaultDates() {
+        const fromDate = document.getElementById('fromDate');
+        const toDate = document.getElementById('toDate');
 
-   setDefaultDates() {
-    const fromDate = document.getElementById('fromDate');
-    const toDate = document.getElementById('toDate');
-    
-    const today = new Date();
-    
-    // Format thủ công YYYY-MM-DD
-    const formatDate = (date) => {
-        const year = date.getFullYear();
-        const month = String(date.getMonth() + 1).padStart(2, '0');
-        const day = String(date.getDate()).padStart(2, '0');
-        return `${year}-${month}-${day}`;
-    };
-    
-    // Ngày đầu tháng hiện tại
-    const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
-    const firstDayStr = formatDate(firstDay);
-    
-    // Ngày cuối tháng hiện tại
-    const lastDay = new Date(today.getFullYear(), today.getMonth() + 1, 0);
-    const lastDayStr = formatDate(lastDay);
-    
-    fromDate.value = firstDayStr;
-    toDate.value = lastDayStr;
-    
-    console.log(`Mặc định: Từ ${firstDayStr} đến ${lastDayStr}`);
-},
+        const today = new Date();
 
+        // Format thủ công YYYY-MM-DD
+        const formatDate = (date) => {
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        };
+
+        // Ngày đầu tháng hiện tại
+        const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
+        const firstDayStr = formatDate(firstDay);
+
+        // Ngày cuối tháng hiện tại
+        const lastDay = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+        const lastDayStr = formatDate(lastDay);
+
+        fromDate.value = firstDayStr;
+        toDate.value = lastDayStr;
+
+        console.log(`Mặc định: Từ ${firstDayStr} đến ${lastDayStr}`);
+    },
+    filterByNPP(npp) {
+        this.currentNPP = npp;
+
+        // Cập nhật lại giao diện
+        this.updateCategoryCards();
+
+        if (this.currentView === 'overview') {
+            ChartManager.createOverviewCharts(this.getFilteredCategoryStats());
+        } else if (this.currentView === 'detail' && this.currentCategory) {
+            const products = this.getFilteredProductStats(this.currentCategory);
+            ChartManager.createDetailCharts(this.currentCategory, products);
+
+            const kvText = this.currentKV === 'all' ? 'Tất cả KV' : this.currentKV;
+            const nppText = this.currentNPP === 'all' ? '' : ` - ${this.currentNPP}`;
+            document.getElementById('detailRevenueChartTitle').textContent = `Sản phẩm - ${this.currentCategory} (Doanh thu - ${kvText}${nppText})`;
+            document.getElementById('detailQuantityChartTitle').textContent = `Sản phẩm - ${this.currentCategory} (Số lượng - ${kvText}${nppText})`;
+        }
+    },
     setupEventListeners() {
         document.getElementById('cardBimQuay').addEventListener('click', () => this.showCategoryDetail('Bim Quẩy'));
         document.getElementById('cardCaCom').addEventListener('click', () => this.showCategoryDetail('Cá cơm'));
@@ -77,48 +113,116 @@ const App = {
             });
         });
     },
+    updateNPPDropdown(kv) {
+        const nppSelect = document.getElementById('nppSelect');
+        if (!nppSelect) return;
 
-filterByKV(kv) {
-    this.currentKV = kv;
-
-    // Cập nhật active state cho các nút
-    document.querySelectorAll('.kv-filter-buttons .kv-btn').forEach(btn => {
-        if (btn.dataset.kv === kv) {
-            btn.classList.add('active');
-        } else {
-            btn.classList.remove('active');
+        // Xóa các option cũ (giữ lại option "Tất cả")
+        while (nppSelect.options.length > 1) {
+            nppSelect.remove(1);
         }
-    });
 
-    // LUÔN CẬP NHẬT category cards bất kể view hiện tại
-    this.updateCategoryCards();
+        if (kv === 'all') {
+            // Nếu chọn "Tất cả KV", hiển thị tất cả NPP
+            const allNPP = Array.from(NPP_KV_MAP.keys()).sort();
+            allNPP.forEach(npp => {
+                const option = document.createElement('option');
+                option.value = npp;
+                option.textContent = npp;
+                nppSelect.appendChild(option);
+            });
+        } else {
+            // Chỉ hiển thị NPP thuộc KV đã chọn
+            const nppList = getNPPByKV(kv);
+            nppList.sort().forEach(npp => {
+                const option = document.createElement('option');
+                option.value = npp;
+                option.textContent = npp;
+                nppSelect.appendChild(option);
+            });
+        }
+    },
+    filterByKV(kv) {
+        this.currentKV = kv;
+        this.currentNPP = 'all'; // Reset NPP về "Tất cả"
 
-    // Cập nhật lại giao diện dựa trên view hiện tại
-    if (this.currentView === 'overview') {
-        ChartManager.createOverviewCharts(this.getFilteredCategoryStats());
-    } else if (this.currentView === 'detail' && this.currentCategory) {
-        // Cập nhật lại chi tiết sản phẩm với bộ lọc mới
-        const products = this.getFilteredProductStats(this.currentCategory);
-        ChartManager.createDetailCharts(this.currentCategory, products);
-        
-        // Cập nhật tiêu đề biểu đồ
-        const kvText = this.currentKV === 'all' ? 'Tất cả KV' : this.currentKV;
-        document.getElementById('detailRevenueChartTitle').textContent = `Sản phẩm - ${this.currentCategory} (Doanh thu - ${kvText})`;
-        document.getElementById('detailQuantityChartTitle').textContent = `Sản phẩm - ${this.currentCategory} (Số lượng - ${kvText})`;
-    }
-},
+        // Cập nhật NPP dropdown dựa trên KV mới
+        this.updateNPPDropdown(kv);
 
-    getKVFromBill(bill) {
-        const tenNPP = bill.ma_nhom || bill.ten_nhom;
-        return getKVFromNPP(tenNPP);
+        // Reset select value
+        const nppSelect = document.getElementById('nppSelect');
+        if (nppSelect) {
+            nppSelect.value = 'all';
+        }
+
+        // Cập nhật active state cho các nút KV
+        document.querySelectorAll('.kv-filter-buttons .kv-btn').forEach(btn => {
+            if (btn.dataset.kv === kv) {
+                btn.classList.add('active');
+            } else {
+                btn.classList.remove('active');
+            }
+        });
+
+        // LUÔN CẬP NHẬT category cards bất kể view hiện tại
+        this.updateCategoryCards();
+
+        // Cập nhật lại giao diện dựa trên view hiện tại
+        if (this.currentView === 'overview') {
+            ChartManager.createOverviewCharts(this.getFilteredCategoryStats());
+        } else if (this.currentView === 'detail' && this.currentCategory) {
+            // Cập nhật lại chi tiết sản phẩm với bộ lọc mới
+            const products = this.getFilteredProductStats(this.currentCategory);
+            ChartManager.createDetailCharts(this.currentCategory, products);
+
+            // Cập nhật tiêu đề biểu đồ
+            const kvText = this.currentKV === 'all' ? 'Tất cả KV' : this.currentKV;
+            const nppText = this.currentNPP === 'all' ? '' : ` - ${this.currentNPP}`;
+            document.getElementById('detailRevenueChartTitle').textContent = `Sản phẩm - ${this.currentCategory} (Doanh thu - ${kvText}${nppText})`;
+            document.getElementById('detailQuantityChartTitle').textContent = `Sản phẩm - ${this.currentCategory} (Số lượng - ${kvText}${nppText})`;
+        }
     },
 
+     getKVFromBill(bill) {
+        let tenNPP = bill.ma_nhom || bill.ten_nhom;
+        if (tenNPP) {
+            tenNPP = this.normalizeNPPName(tenNPP);
+        }
+        return getKVFromNPP(tenNPP);
+    },
+    getNPPFromBill(bill) {
+        let npp = bill.ma_nhom || bill.ten_nhom || 'Không xác định';
+        // Chuẩn hóa tên NPP
+        return this.normalizeNPPName(npp);
+    },
     getFilteredCategoryStats() {
         const filteredStats = new Map();
 
-        if (this.currentKV === 'all') {
+        if (this.currentKV === 'all' && this.currentNPP === 'all') {
             return this.categoryStats;
+        } else if (this.currentNPP !== 'all') {
+            // Lọc theo NPP
+            Array.from(this.categoryNPPStats.entries()).forEach(([key, value]) => {
+                const [catName, npp] = key.split('_');
+                if (npp === this.currentNPP) {
+                    if (filteredStats.has(catName)) {
+                        const existing = filteredStats.get(catName);
+                        existing.revenue += value.revenue;
+                        existing.totalGoi += value.totalGoi;
+                    } else {
+                        filteredStats.set(catName, {
+                            name: catName,
+                            icon: value.icon,
+                            class: value.class,
+                            color: value.color,
+                            revenue: value.revenue,
+                            totalGoi: value.totalGoi
+                        });
+                    }
+                }
+            });
         } else {
+            // Lọc theo KV
             Array.from(this.categoryKVStats.entries()).forEach(([key, value]) => {
                 const [catName, kv] = key.split('_');
                 if (kv === this.currentKV) {
@@ -143,49 +247,56 @@ filterByKV(kv) {
         return filteredStats;
     },
 
+
     getFilteredProductStats(categoryName) {
         const filteredProducts = [];
 
-        if (this.currentKV === 'all') {
-            Array.from(this.productStats.values()).forEach(product => {
-                if (product.category === categoryName) {
+        if (this.currentNPP !== 'all') {
+            // Lọc theo NPP
+            Array.from(this.productNPPStats.values()).forEach(product => {
+                if (product.category === categoryName && product.npp === this.currentNPP) {
                     filteredProducts.push(product);
                 }
             });
-        } else {
+        } else if (this.currentKV !== 'all') {
+            // Lọc theo KV
             Array.from(this.productKVStats.values()).forEach(product => {
                 if (product.category === categoryName && product.kv === this.currentKV) {
                     filteredProducts.push(product);
                 }
             });
-        }
-
-        if (this.currentKV !== 'all') {
-            const productMap = new Map();
-            filteredProducts.forEach(product => {
-                const ma_sp = product.ma_sp;
-                if (productMap.has(ma_sp)) {
-                    const existing = productMap.get(ma_sp);
-                    existing.totalGoi += product.totalGoi;
-                    existing.revenue += product.revenue;
-                } else {
-                    productMap.set(ma_sp, {
-                        ma_sp: product.ma_sp,
-                        ten_sp: product.ten_sp,
-                        category: product.category,
-                        totalGoi: product.totalGoi,
-                        revenue: product.revenue,
-                        kv: product.kv
-                    });
+        } else {
+            // Không lọc
+            Array.from(this.productStats.values()).forEach(product => {
+                if (product.category === categoryName) {
+                    filteredProducts.push(product);
                 }
             });
-
-            return Array.from(productMap.values())
-                .sort((a, b) => (b.revenue || 0) - (a.revenue || 0));
         }
 
-        return filteredProducts.sort((a, b) => (b.revenue || 0) - (a.revenue || 0));
+        // Gom nhóm sản phẩm (trong trường hợp lọc theo KV hoặc NPP có thể có nhiều NPP cùng sản phẩm)
+        const productMap = new Map();
+        filteredProducts.forEach(product => {
+            const ma_sp = product.ma_sp;
+            if (productMap.has(ma_sp)) {
+                const existing = productMap.get(ma_sp);
+                existing.totalGoi += product.totalGoi;
+                existing.revenue += product.revenue;
+            } else {
+                productMap.set(ma_sp, {
+                    ma_sp: product.ma_sp,
+                    ten_sp: product.ten_sp,
+                    category: product.category,
+                    totalGoi: product.totalGoi,
+                    revenue: product.revenue
+                });
+            }
+        });
+
+        return Array.from(productMap.values())
+            .sort((a, b) => (b.revenue || 0) - (a.revenue || 0));
     },
+
 
     getCategory(productCode) {
         if (!productCode) return null;
@@ -202,104 +313,283 @@ filterByKV(kv) {
     },
 
     processPageData(pageData) {
-        if (!Array.isArray(pageData)) return;
+    if (!Array.isArray(pageData)) return;
 
-        pageData.forEach(bill => {
-            if (!bill) return;
+    // Debug variables for HH00029 - NPP Anh Minh HT only
+    let hh00029TotalRevenue = 0;
+    let hh00029TotalQuantity = 0;
+    let hh00029TotalGoi = 0;
+    let hh00029Orders = [];
+    let hh00029Details = [];
+    let foundNPPAnhMinhHT = false;
 
-            const kv = this.getKVFromBill(bill);
-            const sanPham = Array.isArray(bill.san_pham) ? bill.san_pham : [];
-            let hasValidCategory = false;
-            const categoriesInBill = new Set();
+    pageData.forEach((bill, billIndex) => {
+        if (!bill) return;
 
-            sanPham.forEach(sp => {
-                if (!sp || !sp.ma_sp) return;
+        const kv = this.getKVFromBill(bill);
+        const npp = this.getNPPFromBill(bill);
+        const sanPham = Array.isArray(bill.san_pham) ? bill.san_pham : [];
+        let hasValidCategory = false;
+        const categoriesInBill = new Set();
 
-                const category = this.getCategory(sp.ma_sp);
-                if (!category) return;
-
-                const revenue = Utils.safeNumber(sp.thanh_tien);
-                const quantity = Utils.safeNumber(sp.so_luong);
-                const unit = sp.ma_dvt || 'Gói';
-                const rate = this.getConversionRate(sp.ma_sp);
-
-                hasValidCategory = true;
-                categoriesInBill.add(category.name);
-
-                const goiFromThisOrder = unit === 'Thùng' ? quantity * rate : quantity;
-
-                const productKVKey = `${sp.ma_sp}_${kv}`;
-                if (this.productKVStats.has(productKVKey)) {
-                    const stats = this.productKVStats.get(productKVKey);
-                    stats.totalGoi += goiFromThisOrder;
-                    stats.revenue += revenue;
-                } else {
-                    this.productKVStats.set(productKVKey, {
-                        ma_sp: sp.ma_sp,
-                        ten_sp: sp.ten_sp || 'Không tên',
-                        category: category.name,
-                        totalGoi: goiFromThisOrder,
-                        revenue: revenue,
-                        kv: kv
-                    });
-                }
-
-                const categoryKVKey = `${category.name}_${kv}`;
-                if (this.categoryKVStats.has(categoryKVKey)) {
-                    const catStats = this.categoryKVStats.get(categoryKVKey);
-                    catStats.revenue += revenue;
-                    catStats.totalGoi += goiFromThisOrder;
-                } else {
-                    this.categoryKVStats.set(categoryKVKey, {
-                        name: category.name,
-                        kv: kv,
-                        icon: category.icon,
-                        class: category.class,
-                        color: category.color,
-                        revenue: revenue,
-                        totalGoi: goiFromThisOrder
-                    });
-                }
-
-                if (this.productStats.has(sp.ma_sp)) {
-                    const stats = this.productStats.get(sp.ma_sp);
-                    stats.totalGoi += goiFromThisOrder;
-                    stats.revenue += revenue;
-                } else {
-                    this.productStats.set(sp.ma_sp, {
-                        ma_sp: sp.ma_sp,
-                        ten_sp: sp.ten_sp || 'Không tên',
-                        category: category.name,
-                        totalGoi: goiFromThisOrder,
-                        revenue: revenue
-                    });
-                }
-
-                if (this.categoryStats.has(category.name)) {
-                    const catStats = this.categoryStats.get(category.name);
-                    catStats.revenue += revenue;
-                    catStats.totalGoi += goiFromThisOrder;
-                } else {
-                    this.categoryStats.set(category.name, {
-                        name: category.name,
-                        icon: category.icon,
-                        class: category.class,
-                        color: category.color,
-                        revenue: revenue,
-                        totalGoi: goiFromThisOrder
-                    });
-                }
+        // ========== DEBUG: Check NPP Anh Minh HT ==========
+        if (npp === 'NPP Anh Minh HT' || npp === 'Anh Minh HT') {
+            foundNPPAnhMinhHT = true;
+            console.log(`🏪 [NPP Anh Minh HT] Bill #${billIndex + 1}:`, {
+                'Mã đơn': bill.ma_don_hang || bill.so_hd || 'N/A',
+                'Ngày': bill.ngay_lap || 'N/A',
+                'Số sản phẩm': sanPham.length
             });
+        }
+        // ========== END CHECK NPP ==========
 
-            if (hasValidCategory) {
-                this.totalFilteredOrders++;
-                categoriesInBill.forEach(catName => {
-                    const orderKey = `${catName}_${kv}`;
-                    this.orderStats.set(orderKey, (this.orderStats.get(orderKey) || 0) + 1);
+        sanPham.forEach((sp, spIndex) => {
+            if (!sp || !sp.ma_sp) return;
+
+            const category = this.getCategory(sp.ma_sp);
+            if (!category) return;
+
+            const revenue = Utils.safeNumber(sp.thanh_tien);
+            const quantity = Utils.safeNumber(sp.so_luong);
+            const unit = sp.ma_dvt || 'Gói';
+            const rate = this.getConversionRate(sp.ma_sp);
+
+            hasValidCategory = true;
+            categoriesInBill.add(category.name);
+
+            const goiFromThisOrder = unit === 'Thùng' ? quantity * rate : quantity;
+
+            // ========== DEBUG: ONLY HH00029 of NPP Anh Minh HT ==========
+            // Chỉ xử lý khi sp.ma_sp là HH00029 VÀ npp là NPP Anh Minh HT
+            if (sp.ma_sp === 'HH00029' && (npp === 'NPP Anh Minh HT' || npp === 'Anh Minh HT')) {
+                const billInfo = {
+                    billIndex: billIndex + 1,
+                    spIndex: spIndex + 1,
+                    ma_don_hang: bill.ma_don_hang || bill.so_hd || 'N/A',
+                    npp: npp,
+                    kv: kv,
+                    ten_sp: sp.ten_sp,
+                    so_luong: quantity,
+                    don_vi: unit,
+                    ty_le_quy_doi: rate,
+                    so_goi: goiFromThisOrder,
+                    thanh_tien: revenue,
+                    ngay: bill.ngay_lap || 'N/A',
+                    ma_khach: bill.ma_khach || 'N/A',
+                    ten_khach: bill.ten_khach || 'N/A'
+                };
+                
+                hh00029Details.push(billInfo);
+                hh00029TotalRevenue += revenue;
+                hh00029TotalQuantity += quantity;
+                hh00029TotalGoi += goiFromThisOrder;
+                hh00029Orders.push(bill.ma_don_hang || bill.so_hd || billIndex);
+                
+                console.log(`🎯 [HH00029 - NPP Anh Minh HT] Bill #${billIndex + 1}, SP #${spIndex + 1}:`, {
+                    'Mã đơn': billInfo.ma_don_hang,
+                    'NPP': npp,
+                    'KV': kv,
+                    'Số lượng': `${quantity} ${unit}`,
+                    'Quy đổi': `${goiFromThisOrder.toLocaleString('vi-VN')} gói`,
+                    'Doanh thu': Utils.formatCurrency(revenue),
+                    'Ngày': billInfo.ngay
+                });
+            }
+            // ========== END DEBUG ==========
+
+            // Thống kê theo NPP
+            const productNPPKey = `${sp.ma_sp}_${npp}`;
+            if (this.productNPPStats.has(productNPPKey)) {
+                const stats = this.productNPPStats.get(productNPPKey);
+                stats.totalGoi += goiFromThisOrder;
+                stats.revenue += revenue;
+            } else {
+                this.productNPPStats.set(productNPPKey, {
+                    ma_sp: sp.ma_sp,
+                    ten_sp: sp.ten_sp || 'Không tên',
+                    category: category.name,
+                    totalGoi: goiFromThisOrder,
+                    revenue: revenue,
+                    npp: npp
+                });
+            }
+
+            const categoryNPPKey = `${category.name}_${npp}`;
+            if (this.categoryNPPStats.has(categoryNPPKey)) {
+                const catStats = this.categoryNPPStats.get(categoryNPPKey);
+                catStats.revenue += revenue;
+                catStats.totalGoi += goiFromThisOrder;
+            } else {
+                this.categoryNPPStats.set(categoryNPPKey, {
+                    name: category.name,
+                    npp: npp,
+                    icon: category.icon,
+                    class: category.class,
+                    color: category.color,
+                    revenue: revenue,
+                    totalGoi: goiFromThisOrder
+                });
+            }
+
+            // Thống kê theo KV (giữ nguyên)
+            const productKVKey = `${sp.ma_sp}_${kv}`;
+            if (this.productKVStats.has(productKVKey)) {
+                const stats = this.productKVStats.get(productKVKey);
+                stats.totalGoi += goiFromThisOrder;
+                stats.revenue += revenue;
+            } else {
+                this.productKVStats.set(productKVKey, {
+                    ma_sp: sp.ma_sp,
+                    ten_sp: sp.ten_sp || 'Không tên',
+                    category: category.name,
+                    totalGoi: goiFromThisOrder,
+                    revenue: revenue,
+                    kv: kv
+                });
+            }
+
+            const categoryKVKey = `${category.name}_${kv}`;
+            if (this.categoryKVStats.has(categoryKVKey)) {
+                const catStats = this.categoryKVStats.get(categoryKVKey);
+                catStats.revenue += revenue;
+                catStats.totalGoi += goiFromThisOrder;
+            } else {
+                this.categoryKVStats.set(categoryKVKey, {
+                    name: category.name,
+                    kv: kv,
+                    icon: category.icon,
+                    class: category.class,
+                    color: category.color,
+                    revenue: revenue,
+                    totalGoi: goiFromThisOrder
+                });
+            }
+
+            // Thống kê tổng (giữ nguyên)
+            if (this.productStats.has(sp.ma_sp)) {
+                const stats = this.productStats.get(sp.ma_sp);
+                stats.totalGoi += goiFromThisOrder;
+                stats.revenue += revenue;
+            } else {
+                this.productStats.set(sp.ma_sp, {
+                    ma_sp: sp.ma_sp,
+                    ten_sp: sp.ten_sp || 'Không tên',
+                    category: category.name,
+                    totalGoi: goiFromThisOrder,
+                    revenue: revenue
+                });
+            }
+
+            if (this.categoryStats.has(category.name)) {
+                const catStats = this.categoryStats.get(category.name);
+                catStats.revenue += revenue;
+                catStats.totalGoi += goiFromThisOrder;
+            } else {
+                this.categoryStats.set(category.name, {
+                    name: category.name,
+                    icon: category.icon,
+                    class: category.class,
+                    color: category.color,
+                    revenue: revenue,
+                    totalGoi: goiFromThisOrder
                 });
             }
         });
-    },
+
+        if (hasValidCategory) {
+            this.totalFilteredOrders++;
+            categoriesInBill.forEach(catName => {
+                const orderKey = `${catName}_${kv}`;
+                this.orderStats.set(orderKey, (this.orderStats.get(orderKey) || 0) + 1);
+            });
+        }
+    });
+
+    // ========== DEBUG: HH00029 of NPP Anh Minh HT SUMMARY ==========
+    if (!foundNPPAnhMinhHT) {
+        console.log('='.repeat(80));
+        console.log('⚠️ KHÔNG TÌM THẤY BẤT KỲ ĐƠN HÀNG NÀO CỦA NPP ANH MINH HT');
+        console.log('='.repeat(80));
+        console.log('Kiểm tra lại:');
+        console.log('1. Tên NPP trong API trả về là gì?');
+        console.log('2. Có đơn hàng nào của NPP Anh Minh HT trong khoảng thời gian này không?');
+        console.log('3. Hàm getNPPFromBill() có trả về đúng tên NPP không?');
+        console.log('='.repeat(80));
+    } else if (hh00029Details.length === 0) {
+        console.log('='.repeat(80));
+        console.log('⚠️ CÓ ĐƠN HÀNG CỦA NPP ANH MINH HT NHƯNG KHÔNG CÓ SẢN PHẨM HH00029');
+        console.log('='.repeat(80));
+        console.log('Kiểm tra:');
+        console.log('1. Mã sản phẩm HH00029 có trong các đơn hàng không?');
+        console.log('2. API có trả về mã sản phẩm đúng là "HH00029" không?');
+        console.log('3. Sản phẩm có thuộc category hợp lệ không?');
+        console.log('='.repeat(80));
+    } else if (hh00029Details.length > 0) {
+        console.log('='.repeat(80));
+        console.log('📊 BÁO CÁO CHI TIẾT SẢN PHẨM HH00029 - NPP ANH MINH HT');
+        console.log('='.repeat(80));
+        console.log(`📦 Tổng số đơn hàng: ${hh00029Orders.length} đơn`);
+        console.log(`📦 Tổng số lượng bán: ${hh00029TotalQuantity.toLocaleString('vi-VN')} thùng`);
+        console.log(`📦 Tổng số gói quy đổi: ${hh00029TotalGoi.toLocaleString('vi-VN')} gói`);
+        console.log(`💰 Tổng doanh thu: ${Utils.formatCurrency(hh00029TotalRevenue)}`);
+        console.log('='.repeat(80));
+        
+        // Thống kê chi tiết theo từng đơn
+        console.log('\n📋 CHI TIẾT TỪNG ĐƠN HÀNG (HH00029 - NPP Anh Minh HT):');
+        console.table(hh00029Details.map(item => ({
+            'STT': item.billIndex,
+            'Mã đơn': item.ma_don_hang,
+            'Ngày': item.ngay,
+            'SL thùng': item.so_luong,
+            'Số gói': item.so_goi.toLocaleString('vi-VN'),
+            'Doanh thu': Utils.formatCurrency(item.thanh_tien),
+            'KV': item.kv,
+            'Mã KH': item.ma_khach,
+            'Tên KH': item.ten_khach
+        })));
+        
+        // Tính tổng số tiền từng dòng để kiểm tra
+        let calculatedTotal = 0;
+        hh00029Details.forEach(item => {
+            calculatedTotal += item.thanh_tien;
+        });
+        
+        console.log('\n📌 KIỂM TRA TỔNG DOANH THU:');
+        console.log(`   Tổng từ chi tiết: ${Utils.formatCurrency(calculatedTotal)}`);
+        console.log(`   Tổng đã tính: ${Utils.formatCurrency(hh00029TotalRevenue)}`);
+        console.log(`   ✅ Khớp: ${calculatedTotal === hh00029TotalRevenue ? 'CÓ' : 'KHÔNG'}`);
+        
+        // Thống kê theo KV
+        const byKV = {};
+        hh00029Details.forEach(item => {
+            if (!byKV[item.kv]) {
+                byKV[item.kv] = { 
+                    count: 0, 
+                    revenue: 0, 
+                    quantity: 0, 
+                    goi: 0,
+                    orders: new Set()
+                };
+            }
+            byKV[item.kv].count++;
+            byKV[item.kv].revenue += item.thanh_tien;
+            byKV[item.kv].quantity += item.so_luong;
+            byKV[item.kv].goi += item.so_goi;
+            byKV[item.kv].orders.add(item.ma_don_hang);
+        });
+        
+        console.log('\n📌 THỐNG KÊ THEO KV:');
+        Object.keys(byKV).sort().forEach(kv => {
+            const data = byKV[kv];
+            console.log(`   ${kv}: ${data.orders.size} đơn | ${data.quantity} thùng (${data.goi.toLocaleString('vi-VN')} gói) | ${Utils.formatCurrency(data.revenue)}`);
+        });
+        
+        console.log('='.repeat(80));
+        console.log('✅ DEBUG HOÀN TẤT - DỮ LIỆU HH00029 CỦA NPP ANH MINH HT ĐÃ ĐƯỢC GHI NHẬN');
+        console.log('='.repeat(80));
+    }
+    // ========== END DEBUG ==========
+},
 
     updatePageInfo(currentPage, totalPages) {
         const pageInfo = document.getElementById('pageInfo');
@@ -389,20 +679,25 @@ filterByKV(kv) {
 
         this.isFetching = true;
         const searchBtn = document.getElementById('searchBtn');
+        const nppSelect = document.getElementById('nppSelect');
 
         searchBtn.disabled = true;
         searchBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Đang lấy dữ liệu...';
 
+        // Reset tất cả dữ liệu
         this.productStats.clear();
         this.productKVStats.clear();
+        this.productNPPStats.clear();
         this.categoryStats.clear();
         this.categoryKVStats.clear();
+        this.categoryNPPStats.clear();
         this.orderStats.clear();
         this.totalFilteredOrders = 0;
         this.totalApiRecords = 0;
         this.currentView = 'overview';
         this.currentCategory = null;
         this.currentKV = 'all';
+        this.currentNPP = 'all';
 
         // Reset và hiển thị page info
         const loadedPagesSpan = document.getElementById('loadedPages');
@@ -411,13 +706,20 @@ filterByKV(kv) {
 
         if (loadedPagesSpan) loadedPagesSpan.textContent = '0';
         if (totalPagesSpan) totalPagesSpan.textContent = '?';
-        if (pageInfo) pageInfo.style.display = 'flex'; // Hiện thông báo đang load
+        if (pageInfo) pageInfo.style.display = 'flex';
 
+        // Reset NPP dropdown
+        if (nppSelect) {
+            nppSelect.innerHTML = '<option value="all">Tất cả NPP</option>';
+        }
+
+        // Ẩn các container chart
         document.getElementById('overviewRevenueChartContainer').style.display = 'none';
         document.getElementById('overviewQuantityChartContainer').style.display = 'none';
         document.getElementById('detailRevenueChartContainer').style.display = 'none';
         document.getElementById('detailQuantityChartContainer').style.display = 'none';
 
+        // Reset active state cho KV buttons
         document.querySelectorAll('.kv-filter-buttons .kv-btn').forEach(btn => {
             if (btn.dataset.kv === 'all') {
                 btn.classList.add('active');
@@ -435,6 +737,7 @@ filterByKV(kv) {
             let pageNumber = 1;
             let hasMoreData = true;
 
+            // Lấy trang đầu tiên
             const firstPageData = await API.fetchPage(1, fromDateStr, toDateStr);
 
             if (firstPageData && firstPageData.status && Array.isArray(firstPageData.data) && firstPageData.data.length > 0) {
@@ -443,6 +746,7 @@ filterByKV(kv) {
                 // Cập nhật số trang đã load
                 if (loadedPagesSpan) loadedPagesSpan.textContent = '1';
 
+                // Kiểm tra xem còn trang tiếp theo không
                 if (firstPageData.data.length === CONFIG.PAGE_SIZE) {
                     pageNumber = 2;
 
@@ -459,6 +763,7 @@ filterByKV(kv) {
                                 // Cập nhật số trang đã load
                                 if (loadedPagesSpan) loadedPagesSpan.textContent = pageNumber;
 
+                                // Nếu số lượng bản ghi ít hơn PAGE_SIZE, đã hết dữ liệu
                                 if (data.data.length < CONFIG.PAGE_SIZE) {
                                     hasMoreData = false;
                                     console.log('Đã lấy hết dữ liệu!');
@@ -478,20 +783,30 @@ filterByKV(kv) {
                 }
             }
 
+            // Sau khi lấy xong dữ liệu, kiểm tra và hiển thị
             if (this.categoryStats.size > 0) {
+                // Cập nhật dropdown NPP với tất cả NPP có dữ liệu
+                this.updateNPPDropdown('all');
+
+                // Cập nhật category cards
                 this.updateCategoryCards();
+
+                // Hiển thị category cards
                 document.getElementById('categoryCards').style.display = 'grid';
+
+                // Hiển thị biểu đồ tổng quan
                 this.showOverviewChart();
 
                 // Ẩn page info sau khi hoàn tất
                 if (pageInfo) {
                     setTimeout(() => {
                         pageInfo.style.display = 'none';
-                    }, 500); // Ẩn sau 2 giây để người dùng kịp nhìn thấy tổng số trang
+                    }, 500);
                 }
             } else {
                 Utils.showError('Không có dữ liệu trong khoảng thời gian này');
                 if (pageInfo) pageInfo.style.display = 'none';
+                document.getElementById('categoryCards').style.display = 'none';
             }
 
         } catch (error) {

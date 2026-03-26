@@ -7,7 +7,8 @@
     <title>Báo cáo doanh thu theo ngành hàng</title>
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
+    <script
+        src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 
     <link rel="stylesheet" href="styles.css">
@@ -17,9 +18,9 @@
     <div class="container">
         <div class="header">
             <div class="header1">
-            <h1><i class="fas fa-chart-pie"></i></i> Báo cáo doanh thu theo ngành hàng</h1>
-            
-        </div>
+                <h1><i class="fas fa-chart-pie"></i></i> Báo cáo doanh thu theo ngành hàng</h1>
+
+            </div>
 
             <div class="filter-section">
                 <div class="date-range">
@@ -38,10 +39,10 @@
                 </div>
 
                 <div class="page-info" id="pageInfo" style="display: none;">
-    <i class="fas fa-spinner fa-spin"></i>
-    <span>Đã load: <span id="loadedPages">0</span> / <span id="totalPages">?</span> trang</span>
+                    <i class="fas fa-spinner fa-spin"></i>
+                    <span>Đã load: <span id="loadedPages">0</span> / <span id="totalPages">?</span> trang</span>
 
-</div> 
+                </div>
             </div>
 
             <div class="error-message" id="errorMessage">
@@ -49,21 +50,34 @@
                 <span id="errorText"></span>
             </div>
 
-            <div class="kv-filter-container">
-                <div class="kv-filter-label">
-                    <i class="fas fa-filter"></i>
-                    <span>Lọc theo khu vực:</span>
-                </div>
-                <div class="kv-filter-buttons">
-                    <button class="kv-btn active" data-kv="all">Tất cả</button>
-                    <button class="kv-btn" data-kv="KV1">KV1</button>
-                    <button class="kv-btn" data-kv="KV2">KV2</button>
-                    <button class="kv-btn" data-kv="KV3">KV3</button>
-                    <button class="kv-btn" data-kv="KV4">KV4</button>
-                    <button class="kv-btn" data-kv="KV5">KV5</button>
-                    <button class="kv-btn" data-kv="KV6">KV6</button>
-                </div>
-            </div>
+            <!-- Thêm vào sau phần KV filter -->
+<div class="kv-filter-container">
+    <div class="kv-filter-label">
+        <i class="fas fa-filter"></i>
+        <span>Lọc theo khu vực:</span>
+    </div>
+    <div class="kv-filter-buttons">
+        <button class="kv-btn active" data-kv="all">Tất cả</button>
+        <button class="kv-btn" data-kv="KV1">KV1</button>
+        <button class="kv-btn" data-kv="KV2">KV2</button>
+        <button class="kv-btn" data-kv="KV3">KV3</button>
+        <button class="kv-btn" data-kv="KV4">KV4</button>
+        <button class="kv-btn" data-kv="KV5">KV5</button>
+        <button class="kv-btn" data-kv="KV6">KV6</button>
+    </div>
+   
+</div>
+
+<!-- Thêm filter NPP mới -->
+ <div class="npp-filter-container">
+    <div class="npp-filter-label">
+        <i class="fas fa-store"></i>
+        <span>Lọc theo NPP:</span>
+    </div>
+    <select id="nppSelect" class="npp-select">
+        <option value="all">Tất cả NPP</option>
+    </select>
+</div>
 
             <div class="category-cards" id="categoryCards" style="display: none;">
                 <div class="category-card" id="cardBimQuay" data-category="Bim Quẩy"
@@ -169,7 +183,7 @@
         </div>
     </div>
 
-    
+
 
     <script src="config.js"></script>
     <script src="utils.js"></script>

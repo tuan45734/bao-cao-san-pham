@@ -451,3 +451,62 @@ h1 i {
     font-weight: 700;
     color: #ff7300;
 }
+/* NPP Filter Container */
+.npp-filter-container {
+    background: #f8f9fa;
+    border-radius: 15px;
+    padding: 15px 25px;
+    margin-bottom: 25px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    flex-wrap: wrap;
+    border: 1px solid #e5e7eb;
+}
+
+.npp-filter-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #4b5563;
+    font-weight: 600;
+    font-size: 14px;
+}
+
+.npp-filter-label i {
+    color: #ff7300;
+}
+
+.npp-select {
+    padding: 8px 20px;
+    border: 2px solid #e0e0e0;
+    border-radius: 30px;
+    font-size: 14px;
+    font-weight: 500;
+    color: #333;
+    background: white;
+    cursor: pointer;
+    transition: all 0.3s;
+    min-width: 200px;
+}
+
+.npp-select:hover {
+    border-color: #ff7300;
+}
+
+.npp-select:focus {
+    outline: none;
+    border-color: #ff7300;
+    box-shadow: 0 0 0 3px rgba(255, 115, 0, 0.1);
+}
+
+@media (max-width: 768px) {
+    .npp-filter-container {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    .npp-select {
+        width: 100%;
+    }
+}
