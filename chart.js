@@ -163,154 +163,160 @@ const ChartManager = {
         }
     },
 
-    createOverviewQuantityChart(categoryStats) {
-        const canvas = document.getElementById('overviewQuantityChart');
+   createOverviewQuantityChart(categoryStats) {
+    const canvas = document.getElementById('overviewQuantityChart');
 
-        if (this.overviewQuantityChart) {
-            this.overviewQuantityChart.destroy();
-        }
+    if (this.overviewQuantityChart) {
+        this.overviewQuantityChart.destroy();
+    }
 
-        const ctx = canvas.getContext('2d');
-        
-        const categories = Array.from(categoryStats.values());
-        
-        if (categories.length === 0) {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            ctx.font = 'bold 18px Arial';
-            ctx.fillStyle = '#333';
-            ctx.textAlign = 'center';
-            ctx.fillText('Không có dữ liệu ngành hàng', canvas.width/2, canvas.height/2);
-            return;
-        }
+    const ctx = canvas.getContext('2d');
+    
+    const categories = Array.from(categoryStats.values());
+    
+    if (categories.length === 0) {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.font = 'bold 18px Arial';
+        ctx.fillStyle = '#333';
+        ctx.textAlign = 'center';
+        ctx.fillText('Không có dữ liệu ngành hàng', canvas.width/2, canvas.height/2);
+        return;
+    }
 
-        const sortedCategories = categories.sort((a, b) => (b.totalGoi || 0) - (a.totalGoi || 0));
-        
-        const labels = sortedCategories.map(c => c.name);
-        const quantities = sortedCategories.map(c => Utils.safeNumber(c.totalGoi));
-        const colors = sortedCategories.map(c => c.color || '#667eea');
+    const sortedCategories = categories.sort((a, b) => (b.totalGoi || 0) - (a.totalGoi || 0));
+    
+    const labels = sortedCategories.map(c => c.name);
+    const quantities = sortedCategories.map(c => Utils.safeNumber(c.totalGoi));
+    const colors = sortedCategories.map(c => c.color || '#667eea');
 
-        const chartConfig = {
-            type: 'bar',
-            data: {
-                labels: labels,
-                datasets: [
-                    {
-                        label: 'Số lượng (gói)',
-                        data: quantities,
-                        backgroundColor: colors,
-                        borderColor: colors.map(c => c),
-                        borderWidth: 1,
-                    }
-                ]
+    const chartConfig = {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [
+                {
+                    label: 'Số lượng (gói)',
+                    data: quantities,
+                    backgroundColor: colors,
+                    borderColor: colors.map(c => c),
+                    borderWidth: 1,
+                }
+            ]
+        },
+        options: {
+            indexAxis: 'y',
+            responsive: true,
+            maintainAspectRatio: false,
+            layout: {
+                padding: {
+                    right: 180
+                }
             },
-            options: {
-                indexAxis: 'y',
-                responsive: true,
-                maintainAspectRatio: false,
-                layout: {
-                    padding: {
-                        right: 150
+            plugins: {
+                title: {
+                    display: true,
+                    text: `Số lượng theo ngành hàng`,
+                    font: { size: 18, weight: 'bold' },
+                    color: '#000',
+                    padding: { top: 10, bottom: 20 }
+                },
+                tooltip: {
+                    enabled: true,
+                    titleFont: { size: 14, weight: 'bold' },
+                    bodyFont: { size: 13, weight: 'bold' },
+                    callbacks: {
+                        label: (context) => {
+                            const category = sortedCategories[context.dataIndex];
+                            const casesRounded = Math.round(category.cases * 100) / 100;
+                            return [
+                                `Số lượng: ${Utils.formatNumber(casesRounded)} thùng`,
+                                `Số lượng: ${Utils.formatNumber(context.raw)} gói`
+                            ];
+                        }
                     }
                 },
-                plugins: {
+                legend: {
+                    display: false
+                },
+                datalabels: {
+                    display: true,
+                    anchor: 'end',
+                    align: 'right',
+                    offset: 5,
+                    formatter: (value, context) => {
+                        const category = sortedCategories[context.dataIndex];
+                        const casesRounded = Math.round(category.cases * 100) / 100;
+                        const total = context.chart.data.datasets[0].data.reduce((a, b) => a + b, 0);
+                        const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : 0;
+                        return `${Utils.formatNumber(casesRounded)} thùng\n(${Utils.formatNumber(value)} gói - ${percentage}%)`;
+                    },
+                    font: {
+                        weight: 'bold',
+                        size: 11
+                    },
+                    color: '#000',
+                    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                    padding: {
+                        left: 6,
+                        right: 6,
+                        top: 3,
+                        bottom: 3
+                    },
+                    borderRadius: 4,
+                    borderWidth: 1,
+                    borderColor: '#ddd'
+                },
+            },
+            scales: {
+                x: {
+                    beginAtZero: true,
                     title: {
                         display: true,
-                        text: `Số lượng theo ngành hàng`,
-                        font: { size: 18, weight: 'bold' },
+                        text: 'Số lượng',
+                        font: { size: 14, weight: 'bold' },
+                        color: '#000'
+                    },
+                    ticks: {
+                        font: { size: 12, weight: 'bold' },
                         color: '#000',
-                        padding: { top: 10, bottom: 20 }
-                    },
-                    tooltip: {
-                        enabled: true,
-                        titleFont: { size: 14, weight: 'bold' },
-                        bodyFont: { size: 13, weight: 'bold' },
-                        callbacks: {
-                            label: (context) => {
-                                return `Số lượng: ${Utils.formatNumber(context.raw)} Thùng`;
+                        callback: function(value) {
+                            if (value >= 1000) {
+                                return (value / 1000).toFixed(1) + 'k';
                             }
-                        }
-                    },
-                    legend: {
-                        display: false
-                    },
-                datalabels: {
-    display: true,
-    anchor: 'end',
-    align: 'right',
-    offset: 5,
-    formatter: (value, context) => {
-        // Tính tổng số lượng
-        const total = context.chart.data.datasets[0].data.reduce((a, b) => a + b, 0);
-        const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : 0;
-        return `${Utils.formatNumber(value)} Thùng (${percentage}%)`;
-    },
-    font: {
-        weight: 'bold',
-        size: 12
-    },
-    color: '#000',
-    backgroundColor: 'rgba(255, 255, 255, 0.9)',
-    padding: {
-        left: 6,
-        right: 6,
-        top: 3,
-        bottom: 3
-    },
-    borderRadius: 4,
-    borderWidth: 1,
-    borderColor: '#ddd'
-},
-                },
-                scales: {
-                    x: {
-                        beginAtZero: true,
-                        title: {
-                            display: true,
-                            text: 'Số lượng (gói)',
-                            font: { size: 14, weight: 'bold' },
-                            color: '#000'
-                        },
-                        ticks: {
-                            font: { size: 12, weight: 'bold' },
-                            color: '#000',
-                            callback: function(value) {
-                                if (value >= 1000) {
-                                    return (value / 1000).toFixed(1) + 'k';
-                                }
-                                return value;
-                            }
-                        }
-                    },
-                    y: {
-                        title: {
-                            display: true,
-                            text: 'Ngành hàng',
-                            font: { size: 14, weight: 'bold' },
-                            color: '#000'
-                        },
-                        ticks: {
-                            font: { size: 13, weight: 'bold' },
-                            color: '#000'
+                            return value;
                         }
                     }
                 },
-                onClick: (event, elements) => {
-                    if (elements && elements.length > 0) {
-                        const index = elements[0].index;
-                        const categoryName = labels[index];
-                        window.app.showCategoryDetail(categoryName);
+                y: {
+                    title: {
+                        display: true,
+                        text: 'Ngành hàng',
+                        font: { size: 14, weight: 'bold' },
+                        color: '#000'
+                    },
+                    ticks: {
+                        font: { size: 13, weight: 'bold' },
+                        color: '#000'
                     }
                 }
+            },
+            onClick: (event, elements) => {
+                if (elements && elements.length > 0) {
+                    const index = elements[0].index;
+                    const categoryName = labels[index];
+                    window.app.showCategoryDetail(categoryName);
+                }
             }
-        };
-
-        try {
-            this.overviewQuantityChart = new Chart(ctx, chartConfig);
-            console.log('Overview quantity chart created');
-        } catch (error) {
-            console.error('Lỗi tạo overview quantity chart:', error);
         }
-    },
+    };
+
+    try {
+        this.overviewQuantityChart = new Chart(ctx, chartConfig);
+        console.log('Overview quantity chart created');
+    } catch (error) {
+        console.error('Lỗi tạo overview quantity chart:', error);
+    }
+},
 
     createDetailCharts(categoryName, products) {
         this.createDetailRevenueChart(categoryName, products);
@@ -409,7 +415,7 @@ const ChartManager = {
                 return [
                     `Doanh thu: ${Utils.formatCurrency(context.raw)}`,
                     `Mã SP: ${product.ma_sp}`,
-                    `Số lượng: ${Utils.formatNumber(casesRounded)} thùng (${Utils.formatNumber(product.totalGoi)} gói)`,
+                    `Số lượng: ${Utils.formatNumber(casesRounded)} gói (${Utils.formatNumber(product.totalGoi)} gói)`,
                    
                     `KV: ${product.kv}`
                 ];
@@ -417,7 +423,7 @@ const ChartManager = {
                 return [
                     `Doanh thu: ${Utils.formatCurrency(context.raw)}`,
                     `Mã SP: ${product.ma_sp}`,
-                    `Số lượng: ${Utils.formatNumber(casesRounded)} thùng (${Utils.formatNumber(product.totalGoi)} gói)`,
+                    `Số lượng: ${Utils.formatNumber(casesRounded)} gói (${Utils.formatNumber(product.totalGoi)} gói)`,
                   
                 ];
             }
@@ -502,185 +508,186 @@ const ChartManager = {
     },
 
     createDetailQuantityChart(categoryName, products) {
-        const canvas = document.getElementById('detailQuantityChart');
+    const canvas = document.getElementById('detailQuantityChart');
 
-        if (this.detailQuantityChart) {
-            this.detailQuantityChart.destroy();
-        }
-
-        const ctx = canvas.getContext('2d');
-        
-        if (products.length === 0) {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            ctx.font = 'bold 18px Arial';
-            ctx.fillStyle = '#333';
-            ctx.textAlign = 'center';
-            ctx.fillText(`Không có dữ liệu sản phẩm trong ngành ${categoryName}`, canvas.width/2, canvas.height/2);
-            return;
-        }
-
-        const sortedProducts = products
-            .sort((a, b) => (b.totalGoi || 0) - (a.totalGoi || 0));
-        
-        const labels = sortedProducts.map(p => {
-            const name = p.ten_sp || 'Không tên';
-            return name.length > 40 ? name.substring(0, 40) + '...' : name;
-        });
-        
-        const quantities = sortedProducts.map(p => Utils.safeNumber(p.totalGoi));
-        
-        const colors = [
-            'rgba(102, 126, 234, 0.8)',
-            'rgba(236, 72, 153, 0.8)',
-            'rgba(52, 211, 153, 0.8)',
-            'rgba(251, 146, 60, 0.8)',
-            'rgba(167, 139, 250, 0.8)',
-            'rgba(248, 113, 113, 0.8)',
-            'rgba(45, 212, 191, 0.8)',
-            'rgba(251, 191, 36, 0.8)',
-            'rgba(232, 121, 249, 0.8)',
-            'rgba(96, 165, 250, 0.8)',
-            'rgba(74, 222, 128, 0.8)',
-            'rgba(251, 146, 60, 0.8)',
-            'rgba(192, 132, 252, 0.8)',
-            'rgba(248, 113, 113, 0.8)',
-            'rgba(56, 189, 248, 0.8)',
-            'rgba(250, 204, 21, 0.8)'
-        ];
-
-        const chartConfig = {
-            type: 'bar',
-            data: {
-                labels: labels,
-                datasets: [
-                    {
-                        label: 'Số lượng (gói)',
-                        data: quantities,
-                        backgroundColor: colors.slice(0, sortedProducts.length),
-                        borderColor: '#ffffff',
-                        borderWidth: 1,
-                    }
-                ]
-            },
-            options: {
-                indexAxis: 'y',
-                responsive: true,
-                maintainAspectRatio: false,
-                layout: {
-                    padding: {
-                        right: 150
-                    }
-                },
-                plugins: {
-                    title: {
-                        display: true,
-                        text: `Chi tiết sản phẩm - ${categoryName} (Số lượng)`,
-                        font: { size: 18, weight: 'bold' },
-                        color: '#000',
-                        padding: { top: 10, bottom: 20 }
-                    },
-                    tooltip: {
-    enabled: true,
-    titleFont: { size: 14, weight: 'bold' },
-    bodyFont: { size: 13, weight: 'bold' },
-    callbacks: {
-        label: (context) => {
-            const product = sortedProducts[context.dataIndex];
-            const casesRounded = Math.round(product.cases * 100) / 100;
-            
-            if (product.kv) {
-                return [
-                    `Số lượng: ${Utils.formatNumber(casesRounded)} thùng`,
-                    `Doanh thu: ${Utils.formatCurrency(product.revenue)}`,
-                    `Mã SP: ${product.ma_sp}`,
-                   
-                    `KV: ${product.kv}`
-                ];
-            } else {
-                return [
-                    `Số lượng: ${Utils.formatNumber(casesRounded)} thùng`,
-                    `Doanh thu: ${Utils.formatCurrency(product.revenue)}`,
-                    `Mã SP: ${product.ma_sp}`,
-                   
-                ];
-            }
-        }
+    if (this.detailQuantityChart) {
+        this.detailQuantityChart.destroy();
     }
-},
-                    legend: {
-                        display: false
-                    },
-     datalabels: {
-    display: true,
-    anchor: 'end',
-    align: 'right',
-    offset: 5,
-    formatter: (value, context) => {
-        // Tính tổng số lượng của category
-        const total = context.chart.data.datasets[0].data.reduce((a, b) => a + b, 0);
-        const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : 0;
-        return `${Utils.formatNumber(value)} Thùng (${percentage}%)`;
-    },
-    font: {
-        weight: 'bold',
-        size: 11
-    },
-    color: '#000',
-    backgroundColor: 'rgba(255, 255, 255, 0.9)',
-    padding: {
-        left: 6,
-        right: 6,
-        top: 3,
-        bottom: 3
-    },
-    borderRadius: 4,
-    borderWidth: 1,
-    borderColor: '#ddd'
-},
+
+    const ctx = canvas.getContext('2d');
+    
+    if (products.length === 0) {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.font = 'bold 18px Arial';
+        ctx.fillStyle = '#333';
+        ctx.textAlign = 'center';
+        ctx.fillText(`Không có dữ liệu sản phẩm trong ngành ${categoryName}`, canvas.width/2, canvas.height/2);
+        return;
+    }
+
+    const sortedProducts = products
+        .sort((a, b) => (b.totalGoi || 0) - (a.totalGoi || 0));
+    
+    const labels = sortedProducts.map(p => {
+        const name = p.ten_sp || 'Không tên';
+        return name.length > 40 ? name.substring(0, 40) + '...' : name;
+    });
+    
+    const quantities = sortedProducts.map(p => Utils.safeNumber(p.totalGoi));
+    
+    const colors = [
+        'rgba(102, 126, 234, 0.8)',
+        'rgba(236, 72, 153, 0.8)',
+        'rgba(52, 211, 153, 0.8)',
+        'rgba(251, 146, 60, 0.8)',
+        'rgba(167, 139, 250, 0.8)',
+        'rgba(248, 113, 113, 0.8)',
+        'rgba(45, 212, 191, 0.8)',
+        'rgba(251, 191, 36, 0.8)',
+        'rgba(232, 121, 249, 0.8)',
+        'rgba(96, 165, 250, 0.8)',
+        'rgba(74, 222, 128, 0.8)',
+        'rgba(251, 146, 60, 0.8)',
+        'rgba(192, 132, 252, 0.8)',
+        'rgba(248, 113, 113, 0.8)',
+        'rgba(56, 189, 248, 0.8)',
+        'rgba(250, 204, 21, 0.8)'
+    ];
+
+    const chartConfig = {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [
+                {
+                    label: 'Số lượng (gói)',
+                    data: quantities,
+                    backgroundColor: colors.slice(0, sortedProducts.length),
+                    borderColor: '#ffffff',
+                    borderWidth: 1,
+                }
+            ]
+        },
+        options: {
+            indexAxis: 'y',
+            responsive: true,
+            maintainAspectRatio: false,
+            layout: {
+                padding: {
+                    right: 180
+                }
+            },
+            plugins: {
+                title: {
+                    display: true,
+                    text: `Chi tiết sản phẩm - ${categoryName} (Số lượng)`,
+                    font: { size: 18, weight: 'bold' },
+                    color: '#000',
+                    padding: { top: 10, bottom: 20 }
                 },
-                scales: {
-                    x: {
-                        beginAtZero: true,
-                        title: {
-                            display: true,
-                            text: 'Số lượng (gói)',
-                            font: { size: 14, weight: 'bold' },
-                            color: '#000'
-                        },
-                        ticks: {
-                            font: { size: 12, weight: 'bold' },
-                            color: '#000',
-                            callback: function(value) {
-                                if (value >= 1000) {
-                                    return (value / 1000).toFixed(1) + 'k';
-                                }
-                                return value;
+                tooltip: {
+                    enabled: true,
+                    titleFont: { size: 14, weight: 'bold' },
+                    bodyFont: { size: 13, weight: 'bold' },
+                    callbacks: {
+                        label: (context) => {
+                            const product = sortedProducts[context.dataIndex];
+                            const casesRounded = Math.round(product.cases * 100) / 100;
+                            
+                            if (product.kv) {
+                                return [
+                                    `Số lượng: ${Utils.formatNumber(casesRounded)} thùng`,
+                                    `Số lượng: ${Utils.formatNumber(context.raw)} gói`,
+                                    `Doanh thu: ${Utils.formatCurrency(product.revenue)}`,
+                                    `Mã SP: ${product.ma_sp}`,
+                                    `KV: ${product.kv}`
+                                ];
+                            } else {
+                                return [
+                                    `Số lượng: ${Utils.formatNumber(casesRounded)} thùng`,
+                                    `Số lượng: ${Utils.formatNumber(context.raw)} gói`,
+                                    `Doanh thu: ${Utils.formatCurrency(product.revenue)}`,
+                                    `Mã SP: ${product.ma_sp}`
+                                ];
                             }
                         }
+                    }
+                },
+                legend: {
+                    display: false
+                },
+                datalabels: {
+                    display: true,
+                    anchor: 'end',
+                    align: 'right',
+                    offset: 5,
+                    formatter: (value, context) => {
+                        const product = sortedProducts[context.dataIndex];
+                        const casesRounded = Math.round(product.cases * 100) / 100;
+                        const total = context.chart.data.datasets[0].data.reduce((a, b) => a + b, 0);
+                        const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : 0;
+                        return `${Utils.formatNumber(casesRounded)} thùng\n(${Utils.formatNumber(value)} gói - ${percentage}%)`;
                     },
-                    y: {
-                        title: {
-                            display: true,
-                            text: 'Sản phẩm',
-                            font: { size: 14, weight: 'bold' },
-                            color: '#000'
-                        },
-                        ticks: {
-                            font: { size: 13, weight: 'bold' },
-                            color: '#000'
+                    font: {
+                        weight: 'bold',
+                        size: 11
+                    },
+                    color: '#000',
+                    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                    padding: {
+                        left: 6,
+                        right: 6,
+                        top: 3,
+                        bottom: 3
+                    },
+                    borderRadius: 4,
+                    borderWidth: 1,
+                    borderColor: '#ddd'
+                },
+            },
+            scales: {
+                x: {
+                    beginAtZero: true,
+                    title: {
+                        display: true,
+                        text: 'Số lượng (gói)',
+                        font: { size: 14, weight: 'bold' },
+                        color: '#000'
+                    },
+                    ticks: {
+                        font: { size: 12, weight: 'bold' },
+                        color: '#000',
+                        callback: function(value) {
+                            if (value >= 1000) {
+                                return (value / 1000).toFixed(1) + 'k';
+                            }
+                            return value;
                         }
+                    }
+                },
+                y: {
+                    title: {
+                        display: true,
+                        text: 'Sản phẩm',
+                        font: { size: 14, weight: 'bold' },
+                        color: '#000'
+                    },
+                    ticks: {
+                        font: { size: 13, weight: 'bold' },
+                        color: '#000'
                     }
                 }
             }
-        };
-
-        try {
-            this.detailQuantityChart = new Chart(ctx, chartConfig);
-            console.log('Detail quantity chart created for', categoryName);
-        } catch (error) {
-            console.error('Lỗi tạo detail quantity chart:', error);
         }
-    },
+    };
+
+    try {
+        this.detailQuantityChart = new Chart(ctx, chartConfig);
+        console.log('Detail quantity chart created for', categoryName);
+    } catch (error) {
+        console.error('Lỗi tạo detail quantity chart:', error);
+    }
+},
 
     destroy() {
         if (this.overviewRevenueChart) {

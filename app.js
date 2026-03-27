@@ -526,31 +526,32 @@ NPP_NAME_MAPPING: new Map([
         document.getElementById('pageInfo').style.display = 'none';
     },
 
-     updateCategoryCards() {
-        const categories = ['Bim Quẩy', 'Cá cơm', 'Chân gà', 'Hàng Ướt'];
-        const filteredStats = this.getFilteredCategoryStats();
+    updateCategoryCards() {
+    const categories = ['Bim Quẩy', 'Cá cơm', 'Chân gà', 'Hàng Ướt'];
+    const filteredStats = this.getFilteredCategoryStats();
 
-        categories.forEach(catName => {
-            const catStats = filteredStats.get(catName) || { revenue: 0, cases: 0, totalGoi: 0 };
-            const orders = this.getOrderCountForCategory(catName);
+    categories.forEach(catName => {
+        const catStats = filteredStats.get(catName) || { revenue: 0, cases: 0, totalGoi: 0 };
+        const orders = this.getOrderCountForCategory(catName);
 
-            const revenueId = this.getRevenueId(catName);
-            const quantityId = this.getQuantityId(catName);
-            const ordersId = this.getOrdersId(catName);
+        const revenueId = this.getRevenueId(catName);
+        const quantityId = this.getQuantityId(catName);
+        const ordersId = this.getOrdersId(catName);
 
-            if (revenueId) {
-                document.getElementById(revenueId).textContent = Utils.formatCurrency(Utils.safeNumber(catStats.revenue));
-            }
-            if (quantityId) {
-                // Hiển thị số thùng (làm tròn 2 số thập phân)
-                const casesDisplay = Utils.formatNumber(Math.round(catStats.cases * 100) / 100);
-                document.getElementById(quantityId).innerHTML = `${casesDisplay} thùng<br><span style="font-size: 12px; color: #666;">(${Utils.formatNumber(catStats.totalGoi)} gói)</span>`;
-            }
-            if (ordersId) {
-                document.getElementById(ordersId).textContent = `${Utils.formatNumber(orders)} đơn hàng`;
-            }
-        });
-    },
+        if (revenueId) {
+            document.getElementById(revenueId).textContent = Utils.formatCurrency(Utils.safeNumber(catStats.revenue));
+        }
+        if (quantityId) {
+            // Hiển thị số thùng (làm tròn 2 số thập phân) và số gói
+            const casesDisplay = Utils.formatNumber(Math.round(catStats.cases * 100) / 100);
+            const goiDisplay = Utils.formatNumber(catStats.totalGoi);
+            document.getElementById(quantityId).innerHTML = `${casesDisplay} thùng<br><span style="font-size: 12px; color: #666;">(${goiDisplay} gói)</span>`;
+        }
+        if (ordersId) {
+            document.getElementById(ordersId).textContent = `${Utils.formatNumber(orders)} đơn hàng`;
+        }
+    });
+},
 
     getOrderCountForCategory(categoryName) {
         let total = 0;

@@ -12,6 +12,7 @@ const Utils = {
             currency: 'VND'
         }).format(amount);
     },
+
 formatCases(cases) {
     if (typeof cases !== 'number' || !isFinite(cases)) {
         return '0';
@@ -23,6 +24,7 @@ formatCases(cases) {
         maximumFractionDigits: 2
     }).format(rounded);
 },
+
     formatNumber(number) {
         if (typeof number !== 'number' || !isFinite(number) || number === null || number === undefined) {
             return new Intl.NumberFormat('vi-VN').format(0);
