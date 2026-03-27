@@ -12,7 +12,17 @@ const Utils = {
             currency: 'VND'
         }).format(amount);
     },
-
+formatCases(cases) {
+    if (typeof cases !== 'number' || !isFinite(cases)) {
+        return '0';
+    }
+    // Làm tròn đến 2 số thập phân
+    const rounded = Math.round(cases * 100) / 100;
+    return new Intl.NumberFormat('vi-VN', {
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 2
+    }).format(rounded);
+},
     formatNumber(number) {
         if (typeof number !== 'number' || !isFinite(number) || number === null || number === undefined) {
             return new Intl.NumberFormat('vi-VN').format(0);

@@ -226,7 +226,7 @@ const ChartManager = {
                         bodyFont: { size: 13, weight: 'bold' },
                         callbacks: {
                             label: (context) => {
-                                return `Số lượng: ${Utils.formatNumber(context.raw)} gói`;
+                                return `Số lượng: ${Utils.formatNumber(context.raw)} Thùng`;
                             }
                         }
                     },
@@ -242,7 +242,7 @@ const ChartManager = {
         // Tính tổng số lượng
         const total = context.chart.data.datasets[0].data.reduce((a, b) => a + b, 0);
         const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : 0;
-        return `${Utils.formatNumber(value)} gói (${percentage}%)`;
+        return `${Utils.formatNumber(value)} Thùng (${percentage}%)`;
     },
     font: {
         weight: 'bold',
@@ -395,30 +395,35 @@ const ChartManager = {
                         color: '#000',
                         padding: { top: 10, bottom: 20 }
                     },
-                    tooltip: {
-                        enabled: true,
-                        titleFont: { size: 14, weight: 'bold' },
-                        bodyFont: { size: 13, weight: 'bold' },
-                        callbacks: {
-                            label: (context) => {
-                                const product = sortedProducts[context.dataIndex];
-                                if (product.kv) {
-                                    return [
-                                        `Doanh thu: ${Utils.formatCurrency(context.raw)}`,
-                                        `Mã SP: ${product.ma_sp}`,
-                                        `Số lượng: ${Utils.formatNumber(product.totalGoi)} gói`,
-                                        `KV: ${product.kv}`
-                                    ];
-                                } else {
-                                    return [
-                                        `Doanh thu: ${Utils.formatCurrency(context.raw)}`,
-                                        `Mã SP: ${product.ma_sp}`,
-                                        `Số lượng: ${Utils.formatNumber(product.totalGoi)} gói`
-                                    ];
-                                }
-                            }
-                        }
-                    },
+                   tooltip: {
+    enabled: true,
+    titleFont: { size: 14, weight: 'bold' },
+    bodyFont: { size: 13, weight: 'bold' },
+    callbacks: {
+        label: (context) => {
+            const product = sortedProducts[context.dataIndex];
+            // Làm tròn số thùng đến 2 số thập phân
+            const casesRounded = Math.round(product.cases * 100) / 100;
+            
+            if (product.kv) {
+                return [
+                    `Doanh thu: ${Utils.formatCurrency(context.raw)}`,
+                    `Mã SP: ${product.ma_sp}`,
+                    `Số lượng: ${Utils.formatNumber(casesRounded)} thùng (${Utils.formatNumber(product.totalGoi)} gói)`,
+                   
+                    `KV: ${product.kv}`
+                ];
+            } else {
+                return [
+                    `Doanh thu: ${Utils.formatCurrency(context.raw)}`,
+                    `Mã SP: ${product.ma_sp}`,
+                    `Số lượng: ${Utils.formatNumber(casesRounded)} thùng (${Utils.formatNumber(product.totalGoi)} gói)`,
+                  
+                ];
+            }
+        }
+    }
+},
                     legend: {
                         display: false
                     },
@@ -575,29 +580,33 @@ const ChartManager = {
                         padding: { top: 10, bottom: 20 }
                     },
                     tooltip: {
-                        enabled: true,
-                        titleFont: { size: 14, weight: 'bold' },
-                        bodyFont: { size: 13, weight: 'bold' },
-                        callbacks: {
-                            label: (context) => {
-                                const product = sortedProducts[context.dataIndex];
-                                if (product.kv) {
-                                    return [
-                                        `Số lượng: ${Utils.formatNumber(context.raw)} gói`,
-                                        `Mã SP: ${product.ma_sp}`,
-                                        `Doanh thu: ${Utils.formatCurrency(product.revenue)}`,
-                                        `KV: ${product.kv}`
-                                    ];
-                                } else {
-                                    return [
-                                        `Số lượng: ${Utils.formatNumber(context.raw)} gói`,
-                                        `Mã SP: ${product.ma_sp}`,
-                                        `Doanh thu: ${Utils.formatCurrency(product.revenue)}`
-                                    ];
-                                }
-                            }
-                        }
-                    },
+    enabled: true,
+    titleFont: { size: 14, weight: 'bold' },
+    bodyFont: { size: 13, weight: 'bold' },
+    callbacks: {
+        label: (context) => {
+            const product = sortedProducts[context.dataIndex];
+            const casesRounded = Math.round(product.cases * 100) / 100;
+            
+            if (product.kv) {
+                return [
+                    `Số lượng: ${Utils.formatNumber(casesRounded)} thùng`,
+                    `Doanh thu: ${Utils.formatCurrency(product.revenue)}`,
+                    `Mã SP: ${product.ma_sp}`,
+                   
+                    `KV: ${product.kv}`
+                ];
+            } else {
+                return [
+                    `Số lượng: ${Utils.formatNumber(casesRounded)} thùng`,
+                    `Doanh thu: ${Utils.formatCurrency(product.revenue)}`,
+                    `Mã SP: ${product.ma_sp}`,
+                   
+                ];
+            }
+        }
+    }
+},
                     legend: {
                         display: false
                     },
@@ -610,7 +619,7 @@ const ChartManager = {
         // Tính tổng số lượng của category
         const total = context.chart.data.datasets[0].data.reduce((a, b) => a + b, 0);
         const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : 0;
-        return `${Utils.formatNumber(value)} gói (${percentage}%)`;
+        return `${Utils.formatNumber(value)} Thùng (${percentage}%)`;
     },
     font: {
         weight: 'bold',
