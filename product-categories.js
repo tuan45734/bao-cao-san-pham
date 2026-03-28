@@ -13,7 +13,13 @@ const PRODUCT_CATEGORIES = [
     { ma_sp: "HH00071", ten_sp: "Bim bim tăm cay (25gram*120 gói/thùng)", ngành_hàng: "Bim Quẩy" },
     { ma_sp: "HH00072", ten_sp: "Bim bim tăm cay (50gram*60 gói/thùng)", ngành_hàng: "Bim Quẩy" },
     { ma_sp: "HH00073", ten_sp: "Bim Bim tam thể (50gram*60 gói/thùng)", ngành_hàng: "Bim Quẩy" },
+    
+    { ma_sp: "HH00081", ten_sp: "Bim bim tăm cay lạc hồng vr2 (25gram*120 gói/thùng)", ngành_hàng: "Bim Quẩy" },
+    { ma_sp: "HH00082", ten_sp: "Bim bim tăm cay lạc hồng vr1 (25gram*120 gói/thùng)", ngành_hàng: "Bim Quẩy" },
+    
     { ma_sp: "HH00101", ten_sp: "Bim bim Tăm Cay bà Tuyết vị Tiêu Đen (25gram*120 gói/thùng)", ngành_hàng: "Bim Quẩy" },
+
+
     { ma_sp: "HH00019", ten_sp: "Cá cơm tê cay bà Tuyết 18g (18g/gói*200 gói/thùng)", ngành_hàng: "Cá cơm" },
     { ma_sp: "HH00083", ten_sp: "Cá cơm ngon ngọt bà Tuyết 18g (18g/gói *200gói/lốc)", ngành_hàng: "Cá cơm" },
     { ma_sp: "HH00015", ten_sp: "Chân gà tê cay bà Tuyết 40g (40g*120 gói/thùng)", ngành_hàng: "Chân gà" },
