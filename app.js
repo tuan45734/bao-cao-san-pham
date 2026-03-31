@@ -526,7 +526,7 @@ NPP_NAME_MAPPING: new Map([
         document.getElementById('pageInfo').style.display = 'none';
     },
 
-    updateCategoryCards() {
+  updateCategoryCards() {
     const categories = ['Bim Quẩy', 'Cá cơm', 'Chân gà', 'Hàng Ướt'];
     const filteredStats = this.getFilteredCategoryStats();
 
@@ -542,9 +542,9 @@ NPP_NAME_MAPPING: new Map([
             document.getElementById(revenueId).textContent = Utils.formatCurrency(Utils.safeNumber(catStats.revenue));
         }
         if (quantityId) {
-            // Hiển thị số thùng (làm tròn 2 số thập phân) và số gói
-            const casesDisplay = Utils.formatNumber(Math.round(catStats.cases * 100) / 100);
-            const goiDisplay = Utils.formatNumber(catStats.totalGoi);
+            // Làm tròn số thùng và số gói
+            const casesDisplay = Utils.formatNumber(Math.round(catStats.cases));
+            const goiDisplay = Utils.formatNumber(Math.round(catStats.totalGoi));
             document.getElementById(quantityId).innerHTML = `${casesDisplay} thùng<br><span style="font-size: 12px; color: #666;">(${goiDisplay} gói)</span>`;
         }
         if (ordersId) {

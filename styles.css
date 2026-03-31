@@ -38,7 +38,7 @@ h1 i {
 }
 
 .header1 {
-    background: linear-gradient(135deg, #667eea 0%, #ff7300 100%);
+    background: linear-gradient(135deg, #ff3c3c 0%, #ff7300 100%);
     color: white;
     padding: 30px;
     border-radius: 15px;
@@ -100,7 +100,7 @@ h1 i {
 }
 
 .search-btn {
-    background: linear-gradient(135deg, #667eea 0%, #ff7300 100%);
+    background: linear-gradient(135deg, #ff3c3c 0%, #ff7300 100%);
     color: white;
     border: none;
     padding: 12px 40px;
