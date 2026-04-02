@@ -47,6 +47,7 @@ const NPP_KV_MAP = new Map([
     ['NPP Thảo Thắng', 'KV4'],
     ['NPP Tùng Phương', 'KV4'],
     
+    ['NPP Đồng Lợi', 'KV5'],
     ['NPP Anh Đức', 'KV5'],
     ['NPP Hải Hằng', 'KV5'],
     ['NPP Hiền Cường', 'KV5'],
