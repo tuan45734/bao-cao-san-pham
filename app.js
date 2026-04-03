@@ -149,34 +149,44 @@ NPP_NAME_MAPPING: new Map([
         });
     },
     updateNPPDropdown(kv) {
-        const nppSelect = document.getElementById('nppSelect');
-        if (!nppSelect) return;
+    const nppSelect = document.getElementById('nppSelect');
+    if (!nppSelect) return;
 
-        // Xóa các option cũ (giữ lại option "Tất cả")
-        while (nppSelect.options.length > 1) {
-            nppSelect.remove(1);
-        }
+    // Xóa các option cũ (giữ lại option "Tất cả")
+    while (nppSelect.options.length > 1) {
+        nppSelect.remove(1);
+    }
 
-        if (kv === 'all') {
-            // Nếu chọn "Tất cả KV", hiển thị tất cả NPP
-            const allNPP = Array.from(NPP_KV_MAP.keys()).sort();
-            allNPP.forEach(npp => {
-                const option = document.createElement('option');
-                option.value = npp;
-                option.textContent = npp;
-                nppSelect.appendChild(option);
-            });
-        } else {
-            // Chỉ hiển thị NPP thuộc KV đã chọn
-            const nppList = getNPPByKV(kv);
-            nppList.sort().forEach(npp => {
-                const option = document.createElement('option');
-                option.value = npp;
-                option.textContent = npp;
-                nppSelect.appendChild(option);
-            });
-        }
-    },
+    if (kv === 'all') {
+        // Nếu chọn "Tất cả KV", hiển thị tất cả NPP
+        const allNPP = Array.from(NPP_KV_MAP.keys()).sort();
+        allNPP.forEach(npp => {
+            const option = document.createElement('option');
+            option.value = npp;
+            // Thêm (Nghỉ) cho NPP Anh Đức
+            let displayName = npp;
+            if (npp === 'NPP Anh Đức') {
+                displayName = 'NPP Anh Đức (Nghỉ)';
+            }
+            option.textContent = displayName;
+            nppSelect.appendChild(option);
+        });
+    } else {
+        // Chỉ hiển thị NPP thuộc KV đã chọn
+        const nppList = getNPPByKV(kv);
+        nppList.sort().forEach(npp => {
+            const option = document.createElement('option');
+            option.value = npp;
+            // Thêm (Nghỉ) cho NPP Anh Đức
+            let displayName = npp;
+            if (npp === 'NPP Anh Đức') {
+                displayName = 'NPP Anh Đức (Nghỉ)';
+            }
+            option.textContent = displayName;
+            nppSelect.appendChild(option);
+        });
+    }
+},
     filterByKV(kv) {
         this.currentKV = kv;
         this.currentNPP = 'all'; // Reset NPP về "Tất cả"
