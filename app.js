@@ -23,7 +23,7 @@ const App = {
         'HH00100': 40, 'HH00105': 100, 'HH00074': 300, 'HH00075': 60, 'HH00077': 300,
         'HH00078': 300, 'HH00079': 300, 'HH00080': 300
     },
-     PRICE_PER_CASE: {
+    PRICE_PER_CASE: {
         // Bim Quẩy
         'HH00055': 432000, 'HH00056': 432000, 'HH00057': 432000, 'HH00058': 432000, 'HH00059': 432000,
         'HH00062': 432000, 'HH00063': 432000, 'HH00065': 432000, 'HH00067': 432000, 'HH00069': 432000,
@@ -37,19 +37,19 @@ const App = {
         'HH00074': 432000, 'HH00075': 432000, 'HH00077': 432000, 'HH00078': 432000,
         'HH00079': 432000, 'HH00080': 432000
     },
-    
+
     // Lấy giá thùng
     getPricePerCase(productCode) {
         return this.PRICE_PER_CASE[productCode] || 0;
     },
-    
+
     // Tính số thùng từ doanh thu
     calculateCasesFromRevenue(productCode, revenue) {
         const pricePerCase = this.getPricePerCase(productCode);
         if (pricePerCase === 0) return 0;
         return revenue / pricePerCase;
     },
-    
+
     // Tính số thùng từ số lượng gói (giữ lại để tham khảo)
     calculateCasesFromGoi(goiCount, productCode) {
         const pricePerCase = this.getPricePerCase(productCode);
@@ -58,15 +58,15 @@ const App = {
         // Nếu cần tính từ gói, cần biết số gói/thùng
         return 0; // Sẽ tính sau nếu cần
     },
-NPP_NAME_MAPPING: new Map([
+    NPP_NAME_MAPPING: new Map([
         ['NPP Tân Thúy', 'NPP Tân Thuý']
     ]),
-    
+
     normalizeNPPName(tenNPP) {
         if (!tenNPP) return tenNPP;
         return this.NPP_NAME_MAPPING.get(tenNPP) || tenNPP;
     },
-    
+
     init() {
         console.log('App initialized');
         this.setDefaultDates();
@@ -149,44 +149,51 @@ NPP_NAME_MAPPING: new Map([
         });
     },
     updateNPPDropdown(kv) {
-    const nppSelect = document.getElementById('nppSelect');
-    if (!nppSelect) return;
+        const nppSelect = document.getElementById('nppSelect');
+        if (!nppSelect) return;
 
-    // Xóa các option cũ (giữ lại option "Tất cả")
-    while (nppSelect.options.length > 1) {
-        nppSelect.remove(1);
-    }
+        // Xóa các option cũ (giữ lại option "Tất cả")
+        while (nppSelect.options.length > 1) {
+            nppSelect.remove(1);
+        }
 
-    if (kv === 'all') {
-        // Nếu chọn "Tất cả KV", hiển thị tất cả NPP
-        const allNPP = Array.from(NPP_KV_MAP.keys()).sort();
-        allNPP.forEach(npp => {
-            const option = document.createElement('option');
-            option.value = npp;
-            // Thêm (Nghỉ) cho NPP Anh Đức
-            let displayName = npp;
-            if (npp === 'NPP Anh Đức') {
-                displayName = 'NPP Anh Đức (Nghỉ)';
-            }
-            option.textContent = displayName;
-            nppSelect.appendChild(option);
-        });
-    } else {
-        // Chỉ hiển thị NPP thuộc KV đã chọn
-        const nppList = getNPPByKV(kv);
-        nppList.sort().forEach(npp => {
-            const option = document.createElement('option');
-            option.value = npp;
-            // Thêm (Nghỉ) cho NPP Anh Đức
-            let displayName = npp;
-            if (npp === 'NPP Anh Đức') {
-                displayName = 'NPP Anh Đức (Nghỉ)';
-            }
-            option.textContent = displayName;
-            nppSelect.appendChild(option);
-        });
-    }
-},
+        if (kv === 'all') {
+            // Nếu chọn "Tất cả KV", hiển thị tất cả NPP
+            const allNPP = Array.from(NPP_KV_MAP.keys()).sort();
+            allNPP.forEach(npp => {
+                const option = document.createElement('option');
+                option.value = npp;
+                // Thêm (Nghỉ) cho NPP Anh Đức
+                let displayName = npp;
+                if (npp === 'NPP Tiên Lan') {
+                    displayName = 'NPP Tiên Lan (Nghỉ)';
+                }
+                if (npp === 'NPP Anh Đức') {
+                    displayName = 'NPP Anh Đức (Nghỉ)';
+                }
+
+                option.textContent = displayName;
+                nppSelect.appendChild(option);
+            });
+        } else {
+            // Chỉ hiển thị NPP thuộc KV đã chọn
+            const nppList = getNPPByKV(kv);
+            nppList.sort().forEach(npp => {
+                const option = document.createElement('option');
+                option.value = npp;
+                // Thêm (Nghỉ) cho NPP Anh Đức
+                let displayName = npp;
+                if (npp === 'NPP Anh Đức') {
+                    displayName = 'NPP Anh Đức (Nghỉ)';
+                }
+                if (npp === 'NPP Tiên Lan') {
+                    displayName = 'NPP Tiên Lan (Nghỉ)';
+                }
+                option.textContent = displayName;
+                nppSelect.appendChild(option);
+            });
+        }
+    },
     filterByKV(kv) {
         this.currentKV = kv;
         this.currentNPP = 'all'; // Reset NPP về "Tất cả"
@@ -228,7 +235,7 @@ NPP_NAME_MAPPING: new Map([
         }
     },
 
-     getKVFromBill(bill) {
+    getKVFromBill(bill) {
         let tenNPP = bill.ma_nhom || bill.ten_nhom;
         if (tenNPP) {
             tenNPP = this.normalizeNPPName(tenNPP);
@@ -364,7 +371,7 @@ NPP_NAME_MAPPING: new Map([
         return this.CONVERSION_RATES[productCode] || 1;
     },
 
-   processPageData(pageData) {
+    processPageData(pageData) {
         if (!Array.isArray(pageData)) return;
 
         pageData.forEach((bill, billIndex) => {
@@ -385,11 +392,11 @@ NPP_NAME_MAPPING: new Map([
                 const revenue = Utils.safeNumber(sp.thanh_tien);
                 const quantity = Utils.safeNumber(sp.so_luong);
                 const unit = sp.ma_dvt || 'Gói';
-                
+
                 // TÍNH SỐ THÙNG DỰA TRÊN DOANH THU VÀ GIÁ THÙNG
                 const pricePerCase = this.getPricePerCase(sp.ma_sp);
                 const casesFromRevenue = pricePerCase > 0 ? revenue / pricePerCase : 0;
-                
+
                 // Vẫn giữ totalGoi để thống kê số lượng gói (nếu cần)
                 // Nhưng ưu tiên dùng thùng để tính toán
                 const rate = this.getConversionRate(sp.ma_sp); // Giữ lại rate cũ nếu có
@@ -536,32 +543,32 @@ NPP_NAME_MAPPING: new Map([
         document.getElementById('pageInfo').style.display = 'none';
     },
 
-  updateCategoryCards() {
-    const categories = ['Bim Quẩy', 'Cá cơm', 'Chân gà', 'Hàng Ướt'];
-    const filteredStats = this.getFilteredCategoryStats();
+    updateCategoryCards() {
+        const categories = ['Bim Quẩy', 'Cá cơm', 'Chân gà', 'Hàng Ướt'];
+        const filteredStats = this.getFilteredCategoryStats();
 
-    categories.forEach(catName => {
-        const catStats = filteredStats.get(catName) || { revenue: 0, cases: 0, totalGoi: 0 };
-        const orders = this.getOrderCountForCategory(catName);
+        categories.forEach(catName => {
+            const catStats = filteredStats.get(catName) || { revenue: 0, cases: 0, totalGoi: 0 };
+            const orders = this.getOrderCountForCategory(catName);
 
-        const revenueId = this.getRevenueId(catName);
-        const quantityId = this.getQuantityId(catName);
-        const ordersId = this.getOrdersId(catName);
+            const revenueId = this.getRevenueId(catName);
+            const quantityId = this.getQuantityId(catName);
+            const ordersId = this.getOrdersId(catName);
 
-        if (revenueId) {
-            document.getElementById(revenueId).textContent = Utils.formatCurrency(Utils.safeNumber(catStats.revenue));
-        }
-        if (quantityId) {
-            // Làm tròn số thùng và số gói
-            const casesDisplay = Utils.formatNumber(Math.round(catStats.cases));
-            const goiDisplay = Utils.formatNumber(Math.round(catStats.totalGoi));
-            document.getElementById(quantityId).innerHTML = `${casesDisplay} thùng<br><span style="font-size: 12px; color: #666;">(${goiDisplay} gói)</span>`;
-        }
-        if (ordersId) {
-            document.getElementById(ordersId).textContent = `${Utils.formatNumber(orders)} đơn hàng`;
-        }
-    });
-},
+            if (revenueId) {
+                document.getElementById(revenueId).textContent = Utils.formatCurrency(Utils.safeNumber(catStats.revenue));
+            }
+            if (quantityId) {
+                // Làm tròn số thùng và số gói
+                const casesDisplay = Utils.formatNumber(Math.round(catStats.cases));
+                const goiDisplay = Utils.formatNumber(Math.round(catStats.totalGoi));
+                document.getElementById(quantityId).innerHTML = `${casesDisplay} thùng<br><span style="font-size: 12px; color: #666;">(${goiDisplay} gói)</span>`;
+            }
+            if (ordersId) {
+                document.getElementById(ordersId).textContent = `${Utils.formatNumber(orders)} đơn hàng`;
+            }
+        });
+    },
 
     getOrderCountForCategory(categoryName) {
         let total = 0;
