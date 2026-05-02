@@ -13,7 +13,20 @@
 
     <link rel="stylesheet" href="styles.css">
 </head>
-
+<!-- Modal xác thực -->
+<div id="authModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>🔐 Xác thực</h2>
+            <p>Vui lòng nhập mã truy cập</p>
+        </div>
+        <div class="modal-body">
+            <input type="password" id="accessCode" placeholder="Nhập mã" class="access-input">
+            <div id="authError" class="auth-error"></div>
+            <button id="submitAuthBtn" class="auth-submit">✅ Xác nhận</button>
+        </div>
+    </div>
+</div>
 <body>
     <div class="container">
         <div class="header">

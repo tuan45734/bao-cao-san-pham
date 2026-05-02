@@ -1,3 +1,5 @@
+// MÃ XÁC THỰC YÊU CẦU
+const REQUIRED_ACCESS_CODE = 'ADMIN99';
 
 const App = {
     productStats: new Map(),
@@ -14,6 +16,7 @@ const App = {
     currentCategory: null,
     currentKV: 'all',
     currentNPP: 'all',
+    isAuthenticated: false, // Thêm trạng thái xác thực
 
     CONVERSION_RATES: {
         'HH00055': 120, 'HH00056': 120, 'HH00057': 120, 'HH00058': 120, 'HH00059': 120,
@@ -69,15 +72,57 @@ const App = {
 
     init() {
         console.log('App initialized');
+        
+        // Khởi tạo modal xác thực
+        this.initAuth();
+        
+        // Mặc định vô hiệu hóa nút tìm kiếm
+        const searchBtn = document.getElementById('searchBtn');
+        if (searchBtn) searchBtn.disabled = true;
+        
         this.setDefaultDates();
         this.setupEventListeners();
         this.setupKVFilterListeners();
         this.setupNPPFilterListeners(); // Thêm listener cho NPP
-
-        // setTimeout(() => {
-        //     this.fetchAllData();
-        // }, 100);
     },
+    
+    initAuth() {
+        const authModal = document.getElementById('authModal');
+        const accessCode = document.getElementById('accessCode');
+        const submitBtn = document.getElementById('submitAuthBtn');
+        const authError = document.getElementById('authError');
+        const searchBtn = document.getElementById('searchBtn');
+        
+        if (!authModal) return;
+        
+        // Hiển thị modal ngay lập tức
+        authModal.classList.add('active');
+        
+        submitBtn.onclick = () => {
+            const code = accessCode.value;
+            if (code && code.toUpperCase() === REQUIRED_ACCESS_CODE) {
+                // Đúng mã
+                this.isAuthenticated = true;
+                authModal.classList.remove('active');
+                if (searchBtn) searchBtn.disabled = false;
+                authError.textContent = '';
+                accessCode.value = '';
+            } else {
+                // Sai mã
+                authError.textContent = '❌ Mã không đúng! Vui lòng thử lại.';
+                accessCode.value = '';
+                accessCode.focus();
+            }
+        };
+        
+        // Cho phép nhấn Enter để xác nhận
+        accessCode.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                submitBtn.click();
+            }
+        });
+    },
+
     setupNPPFilterListeners() {
         const nppSelect = document.getElementById('nppSelect');
         if (nppSelect) {
@@ -614,6 +659,14 @@ const App = {
     },
 
     async fetchAllData() {
+        // Kiểm tra xác thực
+        if (!this.isAuthenticated) {
+            const authModal = document.getElementById('authModal');
+            if (authModal) authModal.classList.add('active');
+            Utils.showError('Vui lòng nhập mã truy cập để xem báo cáo');
+            return;
+        }
+        
         if (this.isFetching) return;
 
         const fromDate = document.getElementById('fromDate').value;
