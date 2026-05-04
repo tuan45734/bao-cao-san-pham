@@ -1,5 +1,5 @@
 // MÃ XÁC THỰC YÊU CẦU
-const REQUIRED_ACCESS_CODE = 'ADMIN99';
+const REQUIRED_ACCESS_CODE = 'ANCUNGBATUYET99';
 
 const App = {
     productStats: new Map(),
