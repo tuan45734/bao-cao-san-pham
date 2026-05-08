@@ -1,13 +1,21 @@
-// MÃ XÁC THỰC YÊU CẦU
-const REQUIRED_ACCESS_CODE = 'ANCUNGBATUYET99';
+// MÃ XÁC THỰC YÊU CẦU - Mapping mã -> quyền
+const ACCESS_CODE_MAP = {
+    'KV1ADZ': 'KV1',
+    'KV2ZAC': 'KV2',
+    'KV3CCC': 'KV3',
+    'KV4YXY': 'KV4',
+    'KV5XXZ': 'KV5',
+    'KV6XBC': 'KV6',
+    'ANCUNGBATUYET99': 'ADMIN'
+};
 
 const App = {
     productStats: new Map(),
     productKVStats: new Map(),
-    productNPPStats: new Map(), // Thêm map lưu theo NPP
+    productNPPStats: new Map(),
     categoryStats: new Map(),
     categoryKVStats: new Map(),
-    categoryNPPStats: new Map(), // Thêm map lưu theo NPP
+    categoryNPPStats: new Map(),
     orderStats: new Map(),
     totalFilteredOrders: 0,
     isFetching: false,
@@ -16,7 +24,9 @@ const App = {
     currentCategory: null,
     currentKV: 'all',
     currentNPP: 'all',
-    isAuthenticated: false, // Thêm trạng thái xác thực
+    isAuthenticated: false,
+    userRole: null,
+    isKVLocked: false,
 
     CONVERSION_RATES: {
         'HH00055': 120, 'HH00056': 120, 'HH00057': 120, 'HH00058': 120, 'HH00059': 120,
@@ -24,46 +34,35 @@ const App = {
         'HH00071': 120, 'HH00072': 60, 'HH00073': 60, 'HH00101': 120, 'HH00019': 200,
         'HH00083': 200, 'HH00015': 120, 'HH00029': 200, 'HH00033': 200, 'HH00099': 40,
         'HH00100': 40, 'HH00105': 100, 'HH00074': 300, 'HH00075': 60, 'HH00077': 300,
-        'HH00078': 300, 'HH00079': 300, 'HH00080': 300
+        'HH00078': 300, 'HH00079': 300, 'HH00080': 300, 'HH00106': 60, 'HH00107': 60,
+        'HH00108': 60, 'HH00109': 60, 'HH00110': 60
     },
+    
     PRICE_PER_CASE: {
-        // Bim Quẩy
         'HH00055': 432000, 'HH00056': 432000, 'HH00057': 432000, 'HH00058': 432000, 'HH00059': 432000,
         'HH00062': 432000, 'HH00063': 432000, 'HH00065': 432000, 'HH00067': 432000, 'HH00069': 432000,
         'HH00071': 432000, 'HH00072': 432000, 'HH00073': 432000, 'HH00101': 432000,
-        // Cá cơm
         'HH00019': 766000, 'HH00083': 766000,
-        // Chân gà
         'HH00015': 842000, 'HH00029': 1387000, 'HH00033': 1387000, 'HH00099': 690000,
         'HH00100': 910000, 'HH00105': 840000,
-        // Hàng Ướt
         'HH00074': 432000, 'HH00075': 432000, 'HH00077': 432000, 'HH00078': 432000,
-        'HH00079': 432000, 'HH00080': 432000
+        'HH00079': 432000, 'HH00080': 432000,
+        'HH00106': 210000, 'HH00107': 210000, 'HH00108': 210000, 'HH00109': 432000, 'HH00110': 432000
     },
 
-    // Lấy giá thùng
+    NPP_NAME_MAPPING: new Map([
+        ['NPP Tân Thúy', 'NPP Tân Thuý']
+    ]),
+
     getPricePerCase(productCode) {
         return this.PRICE_PER_CASE[productCode] || 0;
     },
 
-    // Tính số thùng từ doanh thu
     calculateCasesFromRevenue(productCode, revenue) {
         const pricePerCase = this.getPricePerCase(productCode);
         if (pricePerCase === 0) return 0;
         return revenue / pricePerCase;
     },
-
-    // Tính số thùng từ số lượng gói (giữ lại để tham khảo)
-    calculateCasesFromGoi(goiCount, productCode) {
-        const pricePerCase = this.getPricePerCase(productCode);
-        if (pricePerCase === 0) return 0;
-        // Mỗi thùng có giá nhất định, không phụ thuộc vào số gói
-        // Nếu cần tính từ gói, cần biết số gói/thùng
-        return 0; // Sẽ tính sau nếu cần
-    },
-    NPP_NAME_MAPPING: new Map([
-        ['NPP Tân Thúy', 'NPP Tân Thuý']
-    ]),
 
     normalizeNPPName(tenNPP) {
         if (!tenNPP) return tenNPP;
@@ -72,18 +71,15 @@ const App = {
 
     init() {
         console.log('App initialized');
-        
-        // Khởi tạo modal xác thực
         this.initAuth();
         
-        // Mặc định vô hiệu hóa nút tìm kiếm
         const searchBtn = document.getElementById('searchBtn');
         if (searchBtn) searchBtn.disabled = true;
         
         this.setDefaultDates();
         this.setupEventListeners();
         this.setupKVFilterListeners();
-        this.setupNPPFilterListeners(); // Thêm listener cho NPP
+        this.setupNPPFilterListeners();
     },
     
     initAuth() {
@@ -95,32 +91,138 @@ const App = {
         
         if (!authModal) return;
         
-        // Hiển thị modal ngay lập tức
         authModal.classList.add('active');
         
         submitBtn.onclick = () => {
-            const code = accessCode.value;
-            if (code && code.toUpperCase() === REQUIRED_ACCESS_CODE) {
-                // Đúng mã
+            let code = accessCode.value;
+            if (!code) {
+                authError.textContent = '❌ Vui lòng nhập mã truy cập!';
+                return;
+            }
+            
+            const upperCode = code.toUpperCase().trim();
+            const role = ACCESS_CODE_MAP[upperCode];
+            
+            if (role) {
                 this.isAuthenticated = true;
+                this.userRole = role;
+                
+                if (role !== 'ADMIN') {
+                    this.isKVLocked = true;
+                    this.currentKV = role;
+                } else {
+                    this.isKVLocked = false;
+                    this.currentKV = 'all';
+                }
+                
                 authModal.classList.remove('active');
                 if (searchBtn) searchBtn.disabled = false;
                 authError.textContent = '';
                 accessCode.value = '';
+                
+                this.applyAuthRestrictions();
+                this.showAuthSuccessMessage(role);
             } else {
-                // Sai mã
                 authError.textContent = '❌ Mã không đúng! Vui lòng thử lại.';
                 accessCode.value = '';
                 accessCode.focus();
             }
         };
         
-        // Cho phép nhấn Enter để xác nhận
         accessCode.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') {
                 submitBtn.click();
             }
         });
+    },
+    
+    showAuthSuccessMessage(role) {
+        let message = '';
+        if (role === 'ADMIN') {
+            message = '✅ Đăng nhập thành công! Bạn có quyền ADMIN - Xem được tất cả dữ liệu.';
+        } else {
+            message = `✅ Đăng nhập thành công! Bạn đang xem dữ liệu của khu vực ${role}.`;
+        }
+        
+        const toast = document.createElement('div');
+        toast.style.cssText = `
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: #10b981;
+            color: white;
+            padding: 12px 20px;
+            border-radius: 10px;
+            font-weight: 600;
+            z-index: 2000;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            animation: fadeOut 3s ease forwards;
+        `;
+        toast.textContent = message;
+        document.body.appendChild(toast);
+        
+        if (!document.querySelector('#toastKeyframes')) {
+            const style = document.createElement('style');
+            style.id = 'toastKeyframes';
+            style.textContent = `
+                @keyframes fadeOut {
+                    0% { opacity: 1; transform: translateX(0); }
+                    70% { opacity: 1; transform: translateX(0); }
+                    100% { opacity: 0; transform: translateX(20px); display: none; }
+                }
+            `;
+            document.head.appendChild(style);
+        }
+        
+        setTimeout(() => {
+            toast.remove();
+        }, 3000);
+    },
+    
+    applyAuthRestrictions() {
+        const kvButtons = document.querySelectorAll('.kv-filter-buttons .kv-btn');
+        
+        if (this.isKVLocked) {
+            kvButtons.forEach(btn => {
+                const kvValue = btn.dataset.kv;
+                if (kvValue === this.currentKV) {
+                    btn.classList.add('active');
+                    btn.disabled = false;
+                } else {
+                    btn.classList.remove('active');
+                    btn.disabled = true;
+                    btn.style.opacity = '0.5';
+                    btn.style.cursor = 'not-allowed';
+                }
+            });
+            
+            this.updateNPPDropdown(this.currentKV);
+            
+            const nppSelect = document.getElementById('nppSelect');
+            if (nppSelect) {
+                nppSelect.disabled = false;
+            }
+            
+            console.log(`Đã khóa bộ lọc KV: chỉ xem được ${this.currentKV}`);
+        } else {
+            kvButtons.forEach(btn => {
+                btn.disabled = false;
+                btn.style.opacity = '';
+                btn.style.cursor = 'pointer';
+            });
+            
+            this.currentKV = 'all';
+            document.querySelector('.kv-btn[data-kv="all"]').classList.add('active');
+            this.updateNPPDropdown('all');
+            
+            const nppSelect = document.getElementById('nppSelect');
+            if (nppSelect) {
+                nppSelect.disabled = false;
+                nppSelect.value = 'all';
+            }
+            
+            console.log('ADMIN: có thể xem tất cả KV');
+        }
     },
 
     setupNPPFilterListeners() {
@@ -131,13 +233,13 @@ const App = {
             });
         }
     },
+    
     setDefaultDates() {
         const fromDate = document.getElementById('fromDate');
         const toDate = document.getElementById('toDate');
 
         const today = new Date();
 
-        // Format thủ công YYYY-MM-DD
         const formatDate = (date) => {
             const year = date.getFullYear();
             const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -145,23 +247,18 @@ const App = {
             return `${year}-${month}-${day}`;
         };
 
-        // Ngày đầu tháng hiện tại
         const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
         const firstDayStr = formatDate(firstDay);
 
-        // Ngày cuối tháng hiện tại
         const lastDay = new Date(today.getFullYear(), today.getMonth() + 1, 0);
         const lastDayStr = formatDate(lastDay);
 
         fromDate.value = firstDayStr;
         toDate.value = lastDayStr;
-
-        console.log(`Mặc định: Từ ${firstDayStr} đến ${lastDayStr}`);
     },
+    
     filterByNPP(npp) {
         this.currentNPP = npp;
-
-        // Cập nhật lại giao diện
         this.updateCategoryCards();
 
         if (this.currentView === 'overview') {
@@ -176,6 +273,7 @@ const App = {
             document.getElementById('detailQuantityChartTitle').textContent = `Sản phẩm - ${this.currentCategory} (Số lượng - ${kvText}${nppText})`;
         }
     },
+    
     setupEventListeners() {
         document.getElementById('cardBimQuay').addEventListener('click', () => this.showCategoryDetail('Bim Quẩy'));
         document.getElementById('cardCaCom').addEventListener('click', () => this.showCategoryDetail('Cá cơm'));
@@ -188,27 +286,26 @@ const App = {
     setupKVFilterListeners() {
         document.querySelectorAll('.kv-filter-buttons .kv-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
+                if (btn.disabled) return;
                 const kv = e.target.dataset.kv;
                 this.filterByKV(kv);
             });
         });
     },
+    
     updateNPPDropdown(kv) {
         const nppSelect = document.getElementById('nppSelect');
         if (!nppSelect) return;
 
-        // Xóa các option cũ (giữ lại option "Tất cả")
         while (nppSelect.options.length > 1) {
             nppSelect.remove(1);
         }
 
         if (kv === 'all') {
-            // Nếu chọn "Tất cả KV", hiển thị tất cả NPP
             const allNPP = Array.from(NPP_KV_MAP.keys()).sort();
             allNPP.forEach(npp => {
                 const option = document.createElement('option');
                 option.value = npp;
-                // Thêm (Nghỉ) cho NPP Anh Đức
                 let displayName = npp;
                 if (npp === 'NPP Tiên Lan') {
                     displayName = 'NPP Tiên Lan (Nghỉ)';
@@ -216,17 +313,14 @@ const App = {
                 if (npp === 'NPP Anh Đức') {
                     displayName = 'NPP Anh Đức (Nghỉ)';
                 }
-
                 option.textContent = displayName;
                 nppSelect.appendChild(option);
             });
         } else {
-            // Chỉ hiển thị NPP thuộc KV đã chọn
             const nppList = getNPPByKV(kv);
             nppList.sort().forEach(npp => {
                 const option = document.createElement('option');
                 option.value = npp;
-                // Thêm (Nghỉ) cho NPP Anh Đức
                 let displayName = npp;
                 if (npp === 'NPP Anh Đức') {
                     displayName = 'NPP Anh Đức (Nghỉ)';
@@ -239,20 +333,23 @@ const App = {
             });
         }
     },
+    
     filterByKV(kv) {
+        if (this.isKVLocked && kv !== this.currentKV) {
+            console.log(`Bạn chỉ được xem ${this.currentKV}`);
+            return;
+        }
+        
         this.currentKV = kv;
-        this.currentNPP = 'all'; // Reset NPP về "Tất cả"
+        this.currentNPP = 'all';
 
-        // Cập nhật NPP dropdown dựa trên KV mới
         this.updateNPPDropdown(kv);
 
-        // Reset select value
         const nppSelect = document.getElementById('nppSelect');
         if (nppSelect) {
             nppSelect.value = 'all';
         }
 
-        // Cập nhật active state cho các nút KV
         document.querySelectorAll('.kv-filter-buttons .kv-btn').forEach(btn => {
             if (btn.dataset.kv === kv) {
                 btn.classList.add('active');
@@ -261,18 +358,14 @@ const App = {
             }
         });
 
-        // LUÔN CẬP NHẬT category cards bất kể view hiện tại
         this.updateCategoryCards();
 
-        // Cập nhật lại giao diện dựa trên view hiện tại
         if (this.currentView === 'overview') {
             ChartManager.createOverviewCharts(this.getFilteredCategoryStats());
         } else if (this.currentView === 'detail' && this.currentCategory) {
-            // Cập nhật lại chi tiết sản phẩm với bộ lọc mới
             const products = this.getFilteredProductStats(this.currentCategory);
             ChartManager.createDetailCharts(this.currentCategory, products);
 
-            // Cập nhật tiêu đề biểu đồ
             const kvText = this.currentKV === 'all' ? 'Tất cả KV' : this.currentKV;
             const nppText = this.currentNPP === 'all' ? '' : ` - ${this.currentNPP}`;
             document.getElementById('detailRevenueChartTitle').textContent = `Sản phẩm - ${this.currentCategory} (Doanh thu - ${kvText}${nppText})`;
@@ -287,18 +380,18 @@ const App = {
         }
         return getKVFromNPP(tenNPP);
     },
+    
     getNPPFromBill(bill) {
         let npp = bill.ma_nhom || bill.ten_nhom || 'Không xác định';
-        // Chuẩn hóa tên NPP
         return this.normalizeNPPName(npp);
     },
+    
     getFilteredCategoryStats() {
         const filteredStats = new Map();
 
         if (this.currentKV === 'all' && this.currentNPP === 'all') {
             return this.categoryStats;
         } else if (this.currentNPP !== 'all') {
-            // Lọc theo NPP
             Array.from(this.categoryNPPStats.entries()).forEach(([key, value]) => {
                 const [catName, npp] = key.split('_');
                 if (npp === this.currentNPP) {
@@ -321,7 +414,6 @@ const App = {
                 }
             });
         } else {
-            // Lọc theo KV
             Array.from(this.categoryKVStats.entries()).forEach(([key, value]) => {
                 const [catName, kv] = key.split('_');
                 if (kv === this.currentKV) {
@@ -348,26 +440,22 @@ const App = {
         return filteredStats;
     },
 
-
     getFilteredProductStats(categoryName) {
         const filteredProducts = [];
 
         if (this.currentNPP !== 'all') {
-            // Lọc theo NPP
             Array.from(this.productNPPStats.values()).forEach(product => {
                 if (product.category === categoryName && product.npp === this.currentNPP) {
                     filteredProducts.push(product);
                 }
             });
         } else if (this.currentKV !== 'all') {
-            // Lọc theo KV
             Array.from(this.productKVStats.values()).forEach(product => {
                 if (product.category === categoryName && product.kv === this.currentKV) {
                     filteredProducts.push(product);
                 }
             });
         } else {
-            // Không lọc
             Array.from(this.productStats.values()).forEach(product => {
                 if (product.category === categoryName) {
                     filteredProducts.push(product);
@@ -375,7 +463,6 @@ const App = {
             });
         }
 
-        // Gom nhóm sản phẩm
         const productMap = new Map();
         filteredProducts.forEach(product => {
             const ma_sp = product.ma_sp;
@@ -400,7 +487,6 @@ const App = {
         return Array.from(productMap.values())
             .sort((a, b) => (b.revenue || 0) - (a.revenue || 0));
     },
-
 
     getCategory(productCode) {
         if (!productCode) return null;
@@ -438,39 +524,34 @@ const App = {
                 const quantity = Utils.safeNumber(sp.so_luong);
                 const unit = sp.ma_dvt || 'Gói';
 
-                // TÍNH SỐ THÙNG DỰA TRÊN DOANH THU VÀ GIÁ THÙNG
                 const pricePerCase = this.getPricePerCase(sp.ma_sp);
                 const casesFromRevenue = pricePerCase > 0 ? revenue / pricePerCase : 0;
 
-                // Vẫn giữ totalGoi để thống kê số lượng gói (nếu cần)
-                // Nhưng ưu tiên dùng thùng để tính toán
-                const rate = this.getConversionRate(sp.ma_sp); // Giữ lại rate cũ nếu có
+                const rate = this.getConversionRate(sp.ma_sp);
                 const goiFromThisOrder = unit === 'Thùng' ? quantity * rate : quantity;
 
                 hasValidCategory = true;
                 categoriesInBill.add(category.name);
 
-                // ========== THỐNG KÊ THEO NPP (dùng thùng) ==========
                 const productNPPKey = `${sp.ma_sp}_${npp}`;
                 if (this.productNPPStats.has(productNPPKey)) {
                     const stats = this.productNPPStats.get(productNPPKey);
                     stats.revenue += revenue;
-                    stats.cases += casesFromRevenue; // Thêm số thùng
-                    stats.totalGoi += goiFromThisOrder; // Giữ lại để tham khảo
+                    stats.cases += casesFromRevenue;
+                    stats.totalGoi += goiFromThisOrder;
                 } else {
                     this.productNPPStats.set(productNPPKey, {
                         ma_sp: sp.ma_sp,
                         ten_sp: sp.ten_sp || 'Không tên',
                         category: category.name,
                         revenue: revenue,
-                        cases: casesFromRevenue, // Số thùng
+                        cases: casesFromRevenue,
                         totalGoi: goiFromThisOrder,
                         npp: npp,
                         pricePerCase: pricePerCase
                     });
                 }
 
-                // ========== THỐNG KÊ THEO KV ==========
                 const productKVKey = `${sp.ma_sp}_${kv}`;
                 if (this.productKVStats.has(productKVKey)) {
                     const stats = this.productKVStats.get(productKVKey);
@@ -490,7 +571,6 @@ const App = {
                     });
                 }
 
-                // ========== THỐNG KÊ TỔNG ==========
                 if (this.productStats.has(sp.ma_sp)) {
                     const stats = this.productStats.get(sp.ma_sp);
                     stats.revenue += revenue;
@@ -508,7 +588,6 @@ const App = {
                     });
                 }
 
-                // ========== THỐNG KÊ CATEGORY ==========
                 if (this.categoryStats.has(category.name)) {
                     const catStats = this.categoryStats.get(category.name);
                     catStats.revenue += revenue;
@@ -526,7 +605,6 @@ const App = {
                     });
                 }
 
-                // ========== THỐNG KÊ CATEGORY KV ==========
                 const categoryKVKey = `${category.name}_${kv}`;
                 if (this.categoryKVStats.has(categoryKVKey)) {
                     const catStats = this.categoryKVStats.get(categoryKVKey);
@@ -546,7 +624,6 @@ const App = {
                     });
                 }
 
-                // ========== THỐNG KÊ CATEGORY NPP ==========
                 const categoryNPPKey = `${category.name}_${npp}`;
                 if (this.categoryNPPStats.has(categoryNPPKey)) {
                     const catStats = this.categoryNPPStats.get(categoryNPPKey);
@@ -604,7 +681,6 @@ const App = {
                 document.getElementById(revenueId).textContent = Utils.formatCurrency(Utils.safeNumber(catStats.revenue));
             }
             if (quantityId) {
-                // Làm tròn số thùng và số gói
                 const casesDisplay = Utils.formatNumber(Math.round(catStats.cases));
                 const goiDisplay = Utils.formatNumber(Math.round(catStats.totalGoi));
                 document.getElementById(quantityId).innerHTML = `${casesDisplay} thùng<br><span style="font-size: 12px; color: #666;">(${goiDisplay} gói)</span>`;
@@ -659,7 +735,6 @@ const App = {
     },
 
     async fetchAllData() {
-        // Kiểm tra xác thực
         if (!this.isAuthenticated) {
             const authModal = document.getElementById('authModal');
             if (authModal) authModal.classList.add('active');
@@ -681,7 +756,6 @@ const App = {
         searchBtn.disabled = true;
         searchBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Đang lấy dữ liệu...';
 
-        // Reset tất cả dữ liệu
         this.productStats.clear();
         this.productKVStats.clear();
         this.productNPPStats.clear();
@@ -693,10 +767,11 @@ const App = {
         this.totalApiRecords = 0;
         this.currentView = 'overview';
         this.currentCategory = null;
-        this.currentKV = 'all';
-        this.currentNPP = 'all';
+        
+        if (!this.isKVLocked) {
+            this.currentKV = 'all';
+        }
 
-        // Reset và hiển thị page info
         const loadedPagesSpan = document.getElementById('loadedPages');
         const totalPagesSpan = document.getElementById('totalPages');
         const pageInfo = document.getElementById('pageInfo');
@@ -705,25 +780,14 @@ const App = {
         if (totalPagesSpan) totalPagesSpan.textContent = '?';
         if (pageInfo) pageInfo.style.display = 'flex';
 
-        // Reset NPP dropdown
         if (nppSelect) {
             nppSelect.innerHTML = '<option value="all">Tất cả NPP</option>';
         }
 
-        // Ẩn các container chart
         document.getElementById('overviewRevenueChartContainer').style.display = 'none';
         document.getElementById('overviewQuantityChartContainer').style.display = 'none';
         document.getElementById('detailRevenueChartContainer').style.display = 'none';
         document.getElementById('detailQuantityChartContainer').style.display = 'none';
-
-        // Reset active state cho KV buttons
-        document.querySelectorAll('.kv-filter-buttons .kv-btn').forEach(btn => {
-            if (btn.dataset.kv === 'all') {
-                btn.classList.add('active');
-            } else {
-                btn.classList.remove('active');
-            }
-        });
 
         Utils.showLoading();
 
@@ -734,16 +798,13 @@ const App = {
             let pageNumber = 1;
             let hasMoreData = true;
 
-            // Lấy trang đầu tiên
             const firstPageData = await API.fetchPage(1, fromDateStr, toDateStr);
 
             if (firstPageData && firstPageData.status && Array.isArray(firstPageData.data) && firstPageData.data.length > 0) {
                 this.processPageData(firstPageData.data);
 
-                // Cập nhật số trang đã load
                 if (loadedPagesSpan) loadedPagesSpan.textContent = '1';
 
-                // Kiểm tra xem còn trang tiếp theo không
                 if (firstPageData.data.length === CONFIG.PAGE_SIZE) {
                     pageNumber = 2;
 
@@ -757,10 +818,8 @@ const App = {
                             if (data && data.status && Array.isArray(data.data) && data.data.length > 0) {
                                 this.processPageData(data.data);
 
-                                // Cập nhật số trang đã load
                                 if (loadedPagesSpan) loadedPagesSpan.textContent = pageNumber;
 
-                                // Nếu số lượng bản ghi ít hơn PAGE_SIZE, đã hết dữ liệu
                                 if (data.data.length < CONFIG.PAGE_SIZE) {
                                     hasMoreData = false;
                                     console.log('Đã lấy hết dữ liệu!');
@@ -780,21 +839,12 @@ const App = {
                 }
             }
 
-            // Sau khi lấy xong dữ liệu, kiểm tra và hiển thị
             if (this.categoryStats.size > 0) {
-                // Cập nhật dropdown NPP với tất cả NPP có dữ liệu
-                this.updateNPPDropdown('all');
-
-                // Cập nhật category cards
+                this.updateNPPDropdown(this.currentKV);
                 this.updateCategoryCards();
-
-                // Hiển thị category cards
                 document.getElementById('categoryCards').style.display = 'grid';
-
-                // Hiển thị biểu đồ tổng quan
                 this.showOverviewChart();
 
-                // Ẩn page info sau khi hoàn tất
                 if (pageInfo) {
                     setTimeout(() => {
                         pageInfo.style.display = 'none';
@@ -851,8 +901,9 @@ const App = {
         document.getElementById('detailQuantityChartContainer').style.display = 'block';
 
         const kvText = this.currentKV === 'all' ? 'Tất cả KV' : this.currentKV;
-        document.getElementById('detailRevenueChartTitle').textContent = `Sản phẩm - ${categoryName} (Doanh thu - ${kvText})`;
-        document.getElementById('detailQuantityChartTitle').textContent = `Sản phẩm - ${categoryName} (Số lượng - ${kvText})`;
+        const nppText = this.currentNPP === 'all' ? '' : ` - ${this.currentNPP}`;
+        document.getElementById('detailRevenueChartTitle').textContent = `Sản phẩm - ${categoryName} (Doanh thu - ${kvText}${nppText})`;
+        document.getElementById('detailQuantityChartTitle').textContent = `Sản phẩm - ${categoryName} (Số lượng - ${kvText}${nppText})`;
 
         const products = this.getFilteredProductStats(categoryName);
         ChartManager.createDetailCharts(categoryName, products);

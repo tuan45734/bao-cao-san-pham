@@ -1,5 +1,7 @@
 
 const PRODUCT_CATEGORIES = [
+    { ma_sp: "HH00109", ten_sp: "	Quẩy Tuyết giòn tan vị tiêu đen (62 gram*60gói/thùng)", ngành_hàng: "Bim Quẩy" },
+    { ma_sp: "HH00110", ten_sp: "Quẩy Tuyết giòn tan vị tôm chua cay (62 gram*60gói/thùng)", ngành_hàng: "Bim Quẩy" },
     { ma_sp: "HH00055", ten_sp: "Đùi gà rong biển (32gram*120 gói/thùng)", ngành_hàng: "Bim Quẩy" },
     { ma_sp: "HH00056", ten_sp: "Đùi gà phô mai ngô (32gram*120 gói/thùng)", ngành_hàng: "Bim Quẩy" },
     { ma_sp: "HH00057", ten_sp: "Đùi gà phô mai (32gram*120 gói/thùng)", ngành_hàng: "Bim Quẩy" },
@@ -13,10 +15,10 @@ const PRODUCT_CATEGORIES = [
     { ma_sp: "HH00071", ten_sp: "Bim bim tăm cay (25gram*120 gói/thùng)", ngành_hàng: "Bim Quẩy" },
     { ma_sp: "HH00072", ten_sp: "Bim bim tăm cay (50gram*60 gói/thùng)", ngành_hàng: "Bim Quẩy" },
     { ma_sp: "HH00073", ten_sp: "Bim Bim tam thể (50gram*60 gói/thùng)", ngành_hàng: "Bim Quẩy" },
-    
+
     { ma_sp: "HH00081", ten_sp: "Bim bim tăm cay lạc hồng vr2 (25gram*120 gói/thùng)", ngành_hàng: "Bim Quẩy" },
     { ma_sp: "HH00082", ten_sp: "Bim bim tăm cay lạc hồng vr1 (25gram*120 gói/thùng)", ngành_hàng: "Bim Quẩy" },
-    
+
     { ma_sp: "HH00101", ten_sp: "Bim bim Tăm Cay bà Tuyết vị Tiêu Đen (25gram*120 gói/thùng)", ngành_hàng: "Bim Quẩy" },
 
 
@@ -33,7 +35,12 @@ const PRODUCT_CATEGORIES = [
     { ma_sp: "HH00077", ten_sp: "Snack Nem nướng phên (25gram*300 gói/thùng)", ngành_hàng: "Hàng Ướt" },
     { ma_sp: "HH00078", ten_sp: "Snack Bìa Catton (25gram*300 gói/thùng)", ngành_hàng: "Hàng Ướt" },
     { ma_sp: "HH00079", ten_sp: "Snack Bò kobe (25gram*300 gói/thùng)", ngành_hàng: "Hàng Ướt" },
-    { ma_sp: "HH00080", ten_sp: "Snack Cột Điện (25gram*300 gói/thùng)", ngành_hàng: "Hàng Ướt" }
+    { ma_sp: "HH00080", ten_sp: "Snack Cột Điện (25gram*300 gói/thùng)", ngành_hàng: "Hàng Ướt" },
+
+    { ma_sp: "HH00106", ten_sp: "Việt Quất hóa thạch", ngành_hàng: "Phụ" },
+    { ma_sp: "HH00107", ten_sp: "Nho hóa thạch", ngành_hàng: "Phụ" },
+    { ma_sp: "HH00108", ten_sp: "Dâu hóa thạch", ngành_hàng: "Phụ" }
+
 ];
 
 const CATEGORY_MAP = new Map();
@@ -45,7 +52,8 @@ const CATEGORY_STYLES = {
     "Bim Quẩy": { icon: "fa-cookie-bite", class: "bim-quay", color: "#f59e0b" },
     "Cá cơm": { icon: "fa-fish", class: "ca-com", color: "#3b82f6" },
     "Chân gà": { icon: "fa-drumstick-bite", class: "chan-ga", color: "#10b981" },
-    "Hàng Ướt": { icon: "fa-droplet", class: "hang-uot", color: "#8b5cf6" }
+    "Hàng Ướt": { icon: "fa-droplet", class: "hang-uot", color: "#8b5cf6" },
+    "Phụ": { icon: "fa-box-open", class: "phu", color: "#6b7280" }
 };
 
-const ALLOWED_CATEGORIES = new Set(["Bim Quẩy", "Cá cơm", "Chân gà", "Hàng Ướt"]);
+const ALLOWED_CATEGORIES = new Set(["Bim Quẩy", "Cá cơm", "Chân gà", "Hàng Ướt", "Phụ"]);
