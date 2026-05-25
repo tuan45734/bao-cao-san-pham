@@ -35,7 +35,7 @@ const App = {
         'HH00083': 200, 'HH00015': 120, 'HH00029': 200, 'HH00033': 200, 'HH00099': 40,
         'HH00100': 40, 'HH00105': 100, 'HH00074': 300, 'HH00075': 60, 'HH00077': 300,
         'HH00078': 300, 'HH00079': 300, 'HH00080': 300, 'HH00106': 60, 'HH00107': 60,
-        'HH00108': 60, 'HH00109': 60, 'HH00110': 60
+        'HH00108': 60, 'HH00109': 60, 'HH00110': 60, 'HH00111': 90, 'HH00112': 90
     },
     
     PRICE_PER_CASE: {
@@ -47,7 +47,8 @@ const App = {
         'HH00100': 910000, 'HH00105': 840000,
         'HH00074': 432000, 'HH00075': 432000, 'HH00077': 432000, 'HH00078': 432000,
         'HH00079': 432000, 'HH00080': 432000,
-        'HH00106': 210000, 'HH00107': 210000, 'HH00108': 210000, 'HH00109': 432000, 'HH00110': 432000
+        'HH00106': 210000, 'HH00107': 210000, 'HH00108': 210000, 'HH00109': 432000, 'HH00110': 432000,
+        'HH00111': 288000, 'HH00112': 288000
     },
 
     NPP_NAME_MAPPING: new Map([
@@ -276,7 +277,7 @@ const App = {
     
     setupEventListeners() {
         document.getElementById('cardBimQuay').addEventListener('click', () => this.showCategoryDetail('Bim Quẩy'));
-        document.getElementById('cardCaCom').addEventListener('click', () => this.showCategoryDetail('Cá cơm'));
+        document.getElementById('cardPhu').addEventListener('click', () => this.showCategoryDetail('Phụ'));
         document.getElementById('cardChanGa').addEventListener('click', () => this.showCategoryDetail('Chân gà'));
         document.getElementById('cardHangUot').addEventListener('click', () => this.showCategoryDetail('Hàng Ướt'));
 
@@ -666,7 +667,7 @@ const App = {
     },
 
     updateCategoryCards() {
-        const categories = ['Bim Quẩy', 'Cá cơm', 'Chân gà', 'Hàng Ướt'];
+        const categories = ['Bim Quẩy', 'Phụ', 'Chân gà', 'Hàng Ướt'];
         const filteredStats = this.getFilteredCategoryStats();
 
         categories.forEach(catName => {
@@ -707,7 +708,7 @@ const App = {
     getRevenueId(catName) {
         const map = {
             'Bim Quẩy': 'bimQuayRevenue',
-            'Cá cơm': 'caComRevenue',
+            'Phụ': 'phuRevenue',
             'Chân gà': 'chanGaRevenue',
             'Hàng Ướt': 'hangUotRevenue'
         };
@@ -717,7 +718,7 @@ const App = {
     getQuantityId(catName) {
         const map = {
             'Bim Quẩy': 'bimQuayQuantity',
-            'Cá cơm': 'caComQuantity',
+            'Phụ': 'phuQuantity',
             'Chân gà': 'chanGaQuantity',
             'Hàng Ướt': 'hangUotQuantity'
         };
@@ -727,7 +728,7 @@ const App = {
     getOrdersId(catName) {
         const map = {
             'Bim Quẩy': 'bimQuayOrders',
-            'Cá cơm': 'caComOrders',
+            'Phụ': 'phuOrders',
             'Chân gà': 'chanGaOrders',
             'Hàng Ướt': 'hangUotOrders'
         };

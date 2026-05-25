@@ -1,6 +1,6 @@
 
 const NPP_KV_MAP = new Map([
-    
+
     ['NPP Bảo Lâm', 'KV1'],
     ['NPP Công Giang', 'KV1'],
     ['NPP Cường Thịnh', 'KV1'],
@@ -13,7 +13,7 @@ const NPP_KV_MAP = new Map([
     ['NPP Tuấn Huê', 'KV1'],
     ['NPP Tuấn Yến', 'KV1'],
     ['NPP Vũ Tấm', 'KV1'],
-    
+
     ['NPP Duy Anh', 'KV2'],
     ['NPP Hoa Việt', 'KV3'],
     ['NPP Hùng Huệ', 'KV2'],
@@ -25,7 +25,7 @@ const NPP_KV_MAP = new Map([
     ['NPP Phương Đông', 'KV2'],
     ['NPP Thành Lụa', 'KV2'],
     ['NPP Tuấn Huyền', 'KV2'],
-    
+
     ['NPP Bảo Cường', 'KV3'],
     ['NPP Hikoji', 'KV3'],
     ['NPP Long Hải', 'KV3'],
@@ -34,7 +34,7 @@ const NPP_KV_MAP = new Map([
     ['NPP Thắng Lợi', 'KV3'],
     ['NPP Thành Hân', 'KV3'],
     ['NPP Tiến Thịnh', 'KV3'],
-    
+
     ['NPP Ánh Thu', 'KV4'],
     ['NPP Đức Oanh', 'KV4'],
     ['NPP Dương Minh', 'KV4'],
@@ -46,7 +46,7 @@ const NPP_KV_MAP = new Map([
     ['NPP Thăng Hương', 'KV4'],
     ['NPP Thảo Thắng', 'KV4'],
     ['NPP Tùng Phương', 'KV3'],
-    
+
     ['NPP Đồng Lợi', 'KV5'],
     ['NPP Anh Đức', 'KV5'],
     ['NPP Hải Hằng', 'KV5'],
@@ -60,7 +60,7 @@ const NPP_KV_MAP = new Map([
     ['NPP Duy Khoa', 'KV5'],
     ['NPP Tuấn Vân', 'KV5'],
     ['NPP Vũ Đức Nam', 'KV5'],
-    
+
     ['NPP Anh Minh HT', 'KV6'],
     ['NPP Hà Thanh', 'KV6'],
     ['NPP Hồng Đức', 'KV6'],
@@ -75,7 +75,21 @@ const NPP_KV_MAP = new Map([
     ['NPP Thanh Bình', 'KV6'],
     ['NPP Thành Thanh', 'KV6'],
     ['NPP Thông Thơm', 'KV6'],
-    ['NPP Trường Hằng', 'KV6']
+    ['NPP Trường Hằng', 'KV6'],
+
+    ['NPP Tâm Bảo Hân', 'KV7'],
+    ['NPP NAKOA', 'KV7'],
+    ['NPP Dương Thiên Nhi', 'KV7'],
+    ['NPP Tường Vy', 'KV7'],
+    ['NPP Minh Huy', 'KV7'],
+    ['NPP Hiền Thuận', 'KV7'],
+    ['NPP Thúy Diễm', 'KV7'],
+    ['NPP Anh Viên', 'KV7'],
+    ['NPP Hoàng Gia Bảo', 'KV7'],
+    ['NPP Trung Nam', 'KV7'],
+    ['NPP Nam Khánh', 'KV7'],
+    ['NPP Thanh Trà', 'KV7']
+
 ]);
 
 function getKVFromNPP(tenNPP) {

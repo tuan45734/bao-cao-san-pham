@@ -1,6 +1,8 @@
 
 const PRODUCT_CATEGORIES = [
-    { ma_sp: "HH00109", ten_sp: "	Quẩy Tuyết giòn tan vị tiêu đen (62 gram*60gói/thùng)", ngành_hàng: "Bim Quẩy" },
+{ ma_sp: "HH00112", ten_sp: "Snack bánh tráng Bà Tuyết vị sa tế bò (23 gram*90 gói/thùng)", ngành_hàng: "Bim Quẩy" },
+    { ma_sp: "HH00111", ten_sp: "Snack bánh tráng Bà Tuyết vị rong biển (23 gram*90 gói/thùng)", ngành_hàng: "Bim Quẩy" },
+    { ma_sp: "HH00109", ten_sp: "Quẩy Tuyết giòn tan vị tiêu đen (62 gram*60gói/thùng)", ngành_hàng: "Bim Quẩy" },
     { ma_sp: "HH00110", ten_sp: "Quẩy Tuyết giòn tan vị tôm chua cay (62 gram*60gói/thùng)", ngành_hàng: "Bim Quẩy" },
     { ma_sp: "HH00055", ten_sp: "Đùi gà rong biển (32gram*120 gói/thùng)", ngành_hàng: "Bim Quẩy" },
     { ma_sp: "HH00056", ten_sp: "Đùi gà phô mai ngô (32gram*120 gói/thùng)", ngành_hàng: "Bim Quẩy" },
@@ -22,8 +24,7 @@ const PRODUCT_CATEGORIES = [
     { ma_sp: "HH00101", ten_sp: "Bim bim Tăm Cay bà Tuyết vị Tiêu Đen (25gram*120 gói/thùng)", ngành_hàng: "Bim Quẩy" },
 
 
-    { ma_sp: "HH00019", ten_sp: "Cá cơm tê cay bà Tuyết 18g (18g/gói*200 gói/thùng)", ngành_hàng: "Cá cơm" },
-    { ma_sp: "HH00083", ten_sp: "Cá cơm ngon ngọt bà Tuyết 18g (18g/gói *200gói/lốc)", ngành_hàng: "Cá cơm" },
+
     { ma_sp: "HH00015", ten_sp: "Chân gà tê cay bà Tuyết 40g (40g*120 gói/thùng)", ngành_hàng: "Chân gà" },
     { ma_sp: "HH00029", ten_sp: "Chân gà rút xương bà Tuyết 26g (26g*200 gói/thùng)", ngành_hàng: "Chân gà" },
     { ma_sp: "HH00033", ten_sp: "Chân gà rút xương sả tắc 26g (26g*200 gói/thùng)", ngành_hàng: "Chân gà" },
@@ -37,6 +38,8 @@ const PRODUCT_CATEGORIES = [
     { ma_sp: "HH00079", ten_sp: "Snack Bò kobe (25gram*300 gói/thùng)", ngành_hàng: "Hàng Ướt" },
     { ma_sp: "HH00080", ten_sp: "Snack Cột Điện (25gram*300 gói/thùng)", ngành_hàng: "Hàng Ướt" },
 
+        { ma_sp: "HH00019", ten_sp: "Cá cơm tê cay bà Tuyết 18g (18g/gói*200 gói/thùng)", ngành_hàng: "Phụ" },
+    { ma_sp: "HH00083", ten_sp: "Cá cơm ngon ngọt bà Tuyết 18g (18g/gói *200gói/lốc)", ngành_hàng: "Phụ" },
     { ma_sp: "HH00106", ten_sp: "Việt Quất hóa thạch", ngành_hàng: "Phụ" },
     { ma_sp: "HH00107", ten_sp: "Nho hóa thạch", ngành_hàng: "Phụ" },
     { ma_sp: "HH00108", ten_sp: "Dâu hóa thạch", ngành_hàng: "Phụ" }
@@ -50,10 +53,9 @@ PRODUCT_CATEGORIES.forEach(item => {
 
 const CATEGORY_STYLES = {
     "Bim Quẩy": { icon: "fa-cookie-bite", class: "bim-quay", color: "#f59e0b" },
-    "Cá cơm": { icon: "fa-fish", class: "ca-com", color: "#3b82f6" },
     "Chân gà": { icon: "fa-drumstick-bite", class: "chan-ga", color: "#10b981" },
     "Hàng Ướt": { icon: "fa-droplet", class: "hang-uot", color: "#8b5cf6" },
     "Phụ": { icon: "fa-box-open", class: "phu", color: "#6b7280" }
 };
 
-const ALLOWED_CATEGORIES = new Set(["Bim Quẩy", "Cá cơm", "Chân gà", "Hàng Ướt", "Phụ"]);
+const ALLOWED_CATEGORIES = new Set(["Bim Quẩy", "Chân gà", "Hàng Ướt", "Phụ"]);
