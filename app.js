@@ -9,6 +9,13 @@ const ACCESS_CODE_MAP = {
     '99': 'ADMIN'
 };
 
+const REGION_CONFIG = {
+    all: { label: 'Tất cả', kvs: ['KV1', 'KV2', 'KV3', 'KV4', 'KV5', 'KV6', 'KV7'] },
+    mien_bac: { label: 'Miền Bắc', kvs: ['KV1', 'KV2', 'KV3', 'KV4', 'KV5', 'KV6'] },
+    mien_trung: { label: 'Miền Trung', kvs: ['KV7'] },
+    mien_nam: { label: 'Miền Nam', kvs: [] }
+};
+
 const App = {
     productStats: new Map(),
     productKVStats: new Map(),
@@ -22,6 +29,7 @@ const App = {
     totalApiRecords: 0,
     currentView: 'overview',
     currentCategory: null,
+    currentRegion: 'all',
     currentKV: 'all',
     currentNPP: 'all',
     isAuthenticated: false,
@@ -35,7 +43,7 @@ const App = {
         'HH00083': 200, 'HH00015': 120, 'HH00029': 200, 'HH00033': 200, 'HH00099': 40,
         'HH00100': 40, 'HH00105': 100, 'HH00074': 300, 'HH00075': 60, 'HH00077': 300,
         'HH00078': 300, 'HH00079': 300, 'HH00080': 300, 'HH00106': 60, 'HH00107': 60,
-        'HH00108': 60, 'HH00109': 60, 'HH00110': 60, 'HH00111': 90, 'HH00112': 90
+        'HH00108': 60, 'HH00109': 60, 'HH00110': 60, 'HH00111': 90, 'HH00112': 90, 'HH00089':24
     },
     
     PRICE_PER_CASE: {
@@ -48,7 +56,7 @@ const App = {
         'HH00074': 432000, 'HH00075': 432000, 'HH00077': 432000, 'HH00078': 432000,
         'HH00079': 432000, 'HH00080': 432000,
         'HH00106': 210000, 'HH00107': 210000, 'HH00108': 210000, 'HH00109': 432000, 'HH00110': 432000,
-        'HH00111': 288000, 'HH00112': 288000
+        'HH00111': 288000, 'HH00112': 288000,'HH00089': 480000
     },
 
     NPP_NAME_MAPPING: new Map([
@@ -79,6 +87,7 @@ const App = {
         
         this.setDefaultDates();
         this.setupEventListeners();
+        this.setupRegionFilterListeners();
         this.setupKVFilterListeners();
         this.setupNPPFilterListeners();
     },
@@ -181,48 +190,31 @@ const App = {
     },
     
     applyAuthRestrictions() {
-        const kvButtons = document.querySelectorAll('.kv-filter-buttons .kv-btn');
-        
         if (this.isKVLocked) {
-            kvButtons.forEach(btn => {
-                const kvValue = btn.dataset.kv;
-                if (kvValue === this.currentKV) {
-                    btn.classList.add('active');
-                    btn.disabled = false;
-                } else {
-                    btn.classList.remove('active');
-                    btn.disabled = true;
-                    btn.style.opacity = '0.5';
-                    btn.style.cursor = 'not-allowed';
-                }
-            });
-            
-            this.updateNPPDropdown(this.currentKV);
-            
-            const nppSelect = document.getElementById('nppSelect');
-            if (nppSelect) {
-                nppSelect.disabled = false;
-            }
-            
-            console.log(`Đã khóa bộ lọc KV: chỉ xem được ${this.currentKV}`);
+            this.currentRegion = this.getRegionForKV(this.currentKV);
         } else {
-            kvButtons.forEach(btn => {
-                btn.disabled = false;
-                btn.style.opacity = '';
-                btn.style.cursor = 'pointer';
-            });
-            
+            this.currentRegion = 'all';
             this.currentKV = 'all';
-            document.querySelector('.kv-btn[data-kv="all"]').classList.add('active');
-            this.updateNPPDropdown('all');
-            
-            const nppSelect = document.getElementById('nppSelect');
-            if (nppSelect) {
-                nppSelect.disabled = false;
-                nppSelect.value = 'all';
-            }
-            
-            console.log('ADMIN: có thể xem tất cả KV');
+        }
+
+        this.refreshRegionButtons();
+        this.refreshKVButtonsByRegion();
+        this.updateNPPDropdown(this.currentKV);
+
+        const nppSelect = document.getElementById('nppSelect');
+        if (nppSelect) {
+            nppSelect.disabled = false;
+            nppSelect.value = 'all';
+        }
+
+        const regionBtn = document.querySelector(`.region-btn[data-region="${this.currentRegion}"]`);
+        if (regionBtn) {
+            regionBtn.classList.add('active');
+        }
+
+        const kvBtn = document.querySelector(`.kv-btn[data-kv="${this.currentKV}"]`);
+        if (kvBtn) {
+            kvBtn.classList.add('active');
         }
     },
 
@@ -232,6 +224,119 @@ const App = {
             nppSelect.addEventListener('change', (e) => {
                 this.filterByNPP(e.target.value);
             });
+        }
+    },
+
+    setupRegionFilterListeners() {
+        document.querySelectorAll('.region-filter-buttons .region-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                if (btn.disabled) return;
+                this.filterByRegion(e.target.dataset.region);
+            });
+        });
+    },
+
+    getAllowedKVsForRegion(region) {
+        return REGION_CONFIG[region]?.kvs || [];
+    },
+
+    getRegionForKV(kv) {
+        if (['KV1', 'KV2', 'KV3', 'KV4', 'KV5', 'KV6'].includes(kv)) return 'mien_bac';
+        if (kv === 'KV7') return 'mien_trung';
+        return 'mien_nam';
+    },
+
+    refreshRegionButtons() {
+        const regionButtons = document.querySelectorAll('.region-filter-buttons .region-btn');
+        const lockedRegion = this.isKVLocked ? this.getRegionForKV(this.currentKV) : null;
+        regionButtons.forEach(btn => {
+            const regionValue = btn.dataset.region;
+            const isActive = regionValue === this.currentRegion;
+            btn.classList.toggle('active', isActive);
+
+            if (this.isKVLocked && regionValue !== lockedRegion) {
+                btn.disabled = true;
+                btn.style.opacity = '0.5';
+                btn.style.cursor = 'not-allowed';
+            } else {
+                btn.disabled = false;
+                btn.style.opacity = '';
+                btn.style.cursor = 'pointer';
+            }
+
+            if (this.isKVLocked) {
+                btn.disabled = true;
+                btn.style.opacity = regionValue === lockedRegion ? '' : '0.5';
+                btn.style.cursor = 'not-allowed';
+            }
+        });
+    },
+
+    refreshKVButtonsByRegion() {
+        const kvButtons = document.querySelectorAll('.kv-filter-buttons .kv-btn');
+        const allowedKVs = this.getAllowedKVsForRegion(this.currentRegion);
+
+        kvButtons.forEach(btn => {
+            const kvValue = btn.dataset.kv;
+            if (kvValue === 'all') {
+                btn.style.display = '';
+                btn.disabled = false;
+                btn.style.opacity = '';
+                btn.style.cursor = 'pointer';
+                return;
+            }
+
+            const shouldShow = allowedKVs.includes(kvValue);
+            btn.style.display = shouldShow ? '' : 'none';
+            btn.disabled = !shouldShow;
+            btn.style.opacity = shouldShow ? '' : '0.5';
+            btn.style.cursor = shouldShow ? 'pointer' : 'not-allowed';
+
+            if (!shouldShow) {
+                btn.classList.remove('active');
+            }
+        });
+
+        if (this.currentKV !== 'all' && !allowedKVs.includes(this.currentKV)) {
+            this.currentKV = 'all';
+        }
+    },
+
+    filterByRegion(region) {
+        if (this.isKVLocked && region !== this.getRegionForKV(this.currentKV)) {
+            return;
+        }
+
+        this.currentRegion = region;
+        this.currentKV = 'all';
+        this.currentNPP = 'all';
+
+        this.refreshRegionButtons();
+        this.refreshKVButtonsByRegion();
+
+        document.querySelectorAll('.kv-filter-buttons .kv-btn').forEach(btn => {
+            btn.classList.toggle('active', btn.dataset.kv === 'all');
+        });
+
+        const nppSelect = document.getElementById('nppSelect');
+        if (nppSelect) {
+            nppSelect.value = 'all';
+        }
+
+        this.updateNPPDropdown('all');
+        this.updateCategoryCards();
+
+        if (this.currentView === 'overview') {
+            ChartManager.createOverviewCharts(this.getFilteredCategoryStats());
+        } else if (this.currentView === 'detail' && this.currentCategory) {
+            const products = this.getFilteredProductStats(this.currentCategory);
+            ChartManager.createDetailCharts(this.currentCategory, products);
+
+            const regionText = this.currentRegion === 'all' ? 'Tất cả miền' : REGION_CONFIG[this.currentRegion].label;
+            const kvText = this.currentKV === 'all' ? 'Tất cả KV' : this.currentKV;
+            const nppText = this.currentNPP === 'all' ? '' : ` - ${this.currentNPP}`;
+            document.getElementById('detailRevenueChartTitle').textContent = `Sản phẩm - ${this.currentCategory} (Doanh thu - ${regionText} - ${kvText}${nppText})`;
+            document.getElementById('detailQuantityChartTitle').textContent = `Sản phẩm - ${this.currentCategory} (Số lượng - ${regionText} - ${kvText}${nppText})`;
         }
     },
     
@@ -302,42 +407,44 @@ const App = {
             nppSelect.remove(1);
         }
 
-        if (kv === 'all') {
-            const allNPP = Array.from(NPP_KV_MAP.keys()).sort();
-            allNPP.forEach(npp => {
-                const option = document.createElement('option');
-                option.value = npp;
-                let displayName = npp;
-                if (npp === 'NPP Tiên Lan') {
-                    displayName = 'NPP Tiên Lan (Nghỉ)';
-                }
-                if (npp === 'NPP Anh Đức') {
-                    displayName = 'NPP Anh Đức (Nghỉ)';
-                }
-                option.textContent = displayName;
-                nppSelect.appendChild(option);
-            });
-        } else {
-            const nppList = getNPPByKV(kv);
-            nppList.sort().forEach(npp => {
-                const option = document.createElement('option');
-                option.value = npp;
-                let displayName = npp;
-                if (npp === 'NPP Anh Đức') {
-                    displayName = 'NPP Anh Đức (Nghỉ)';
-                }
-                if (npp === 'NPP Tiên Lan') {
-                    displayName = 'NPP Tiên Lan (Nghỉ)';
-                }
-                option.textContent = displayName;
-                nppSelect.appendChild(option);
-            });
+        const allowedKVs = kv === 'all' ? this.getAllowedKVsForRegion(this.currentRegion) : [kv];
+        const nppList = Array.from(NPP_KV_MAP.entries())
+            .filter(([, kvValue]) => allowedKVs.includes(kvValue))
+            .map(([npp]) => npp)
+            .sort();
+
+        if (nppList.length === 0) {
+            const option = document.createElement('option');
+            option.value = 'all';
+            option.textContent = 'Không có NPP';
+            nppSelect.appendChild(option);
+            nppSelect.disabled = true;
+            return;
         }
+
+        nppSelect.disabled = false;
+        nppList.forEach(npp => {
+            const option = document.createElement('option');
+            option.value = npp;
+            let displayName = npp;
+            if (npp === 'NPP Anh Đức') {
+                displayName = 'NPP Anh Đức (Nghỉ)';
+            }
+            if (npp === 'NPP Tiên Lan') {
+                displayName = 'NPP Tiên Lan (Nghỉ)';
+            }
+            option.textContent = displayName;
+            nppSelect.appendChild(option);
+        });
     },
     
     filterByKV(kv) {
         if (this.isKVLocked && kv !== this.currentKV) {
-            console.log(`Bạn chỉ được xem ${this.currentKV}`);
+            console.log(`Báº¡n chá»‰ Ä‘Æ°á»£c xem ${this.currentKV}`);
+            return;
+        }
+
+        if (kv !== 'all' && !this.getAllowedKVsForRegion(this.currentRegion).includes(kv)) {
             return;
         }
         
@@ -389,13 +496,19 @@ const App = {
     
     getFilteredCategoryStats() {
         const filteredStats = new Map();
+        const allowedKVs = this.currentKV === 'all' ? this.getAllowedKVsForRegion(this.currentRegion) : [this.currentKV];
 
-        if (this.currentKV === 'all' && this.currentNPP === 'all') {
+        if (allowedKVs.length === 0) {
+            return filteredStats;
+        }
+
+        if (this.currentKV === 'all' && this.currentNPP === 'all' && this.currentRegion === 'all') {
             return this.categoryStats;
         } else if (this.currentNPP !== 'all') {
             Array.from(this.categoryNPPStats.entries()).forEach(([key, value]) => {
                 const [catName, npp] = key.split('_');
-                if (npp === this.currentNPP) {
+                const nppKv = NPP_KV_MAP.get(npp);
+                if (npp === this.currentNPP && (allowedKVs.length === 0 || allowedKVs.includes(nppKv))) {
                     if (filteredStats.has(catName)) {
                         const existing = filteredStats.get(catName);
                         existing.revenue += value.revenue;
@@ -417,7 +530,7 @@ const App = {
         } else {
             Array.from(this.categoryKVStats.entries()).forEach(([key, value]) => {
                 const [catName, kv] = key.split('_');
-                if (kv === this.currentKV) {
+                if (allowedKVs.includes(kv)) {
                     if (filteredStats.has(catName)) {
                         const existing = filteredStats.get(catName);
                         existing.revenue += value.revenue;
@@ -443,10 +556,16 @@ const App = {
 
     getFilteredProductStats(categoryName) {
         const filteredProducts = [];
+        const allowedKVs = this.currentKV === 'all' ? this.getAllowedKVsForRegion(this.currentRegion) : [this.currentKV];
+
+        if (allowedKVs.length === 0) {
+            return filteredProducts;
+        }
 
         if (this.currentNPP !== 'all') {
             Array.from(this.productNPPStats.values()).forEach(product => {
-                if (product.category === categoryName && product.npp === this.currentNPP) {
+                const productKv = product.kv || NPP_KV_MAP.get(product.npp);
+                if (product.category === categoryName && product.npp === this.currentNPP && (allowedKVs.length === 0 || allowedKVs.includes(productKv))) {
                     filteredProducts.push(product);
                 }
             });
@@ -456,9 +575,9 @@ const App = {
                     filteredProducts.push(product);
                 }
             });
-        } else {
-            Array.from(this.productStats.values()).forEach(product => {
-                if (product.category === categoryName) {
+        } else if (allowedKVs.length > 0) {
+            Array.from(this.productKVStats.values()).forEach(product => {
+                if (product.category === categoryName && allowedKVs.includes(product.kv)) {
                     filteredProducts.push(product);
                 }
             });
@@ -549,6 +668,7 @@ const App = {
                         cases: casesFromRevenue,
                         totalGoi: goiFromThisOrder,
                         npp: npp,
+                        kv: kv,
                         pricePerCase: pricePerCase
                     });
                 }
@@ -694,10 +814,11 @@ const App = {
 
     getOrderCountForCategory(categoryName) {
         let total = 0;
+        const allowedKVs = this.currentKV === 'all' ? this.getAllowedKVsForRegion(this.currentRegion) : [this.currentKV];
         Array.from(this.orderStats.entries()).forEach(([key, value]) => {
             if (key.startsWith(categoryName)) {
                 const kv = key.split('_')[1];
-                if (this.currentKV === 'all' || kv === this.currentKV) {
+                if (allowedKVs.includes(kv)) {
                     total += value;
                 }
             }

@@ -42,7 +42,8 @@ const PRODUCT_CATEGORIES = [
     { ma_sp: "HH00083", ten_sp: "Cá cơm ngon ngọt bà Tuyết 18g (18g/gói *200gói/lốc)", ngành_hàng: "Phụ" },
     { ma_sp: "HH00106", ten_sp: "Việt Quất hóa thạch", ngành_hàng: "Phụ" },
     { ma_sp: "HH00107", ten_sp: "Nho hóa thạch", ngành_hàng: "Phụ" },
-    { ma_sp: "HH00108", ten_sp: "Dâu hóa thạch", ngành_hàng: "Phụ" }
+    { ma_sp: "HH00108", ten_sp: "Dâu hóa thạch", ngành_hàng: "Phụ" },
+     { ma_sp: "HH00089", ten_sp: "Sốt muối ớt đỏ 200 ml", ngành_hàng: "Phụ" }
 
 ];
 
