@@ -1,103 +1,52 @@
 
-const NPP_KV_MAP = new Map([
+let NPP_KV_MAP = null;
 
-    ['NPP Bảo Lâm', 'KV1'],
-    ['NPP Công Giang', 'KV1'],
-    ['NPP Cường Thịnh', 'KV1'],
-    ['NPP Đức Nam Tiến', 'KV1'],
-    ['NPP Dũng Cúc', 'KV1'],
-    ['NPP Lâm Hạ', 'KV1'],
-    ['NPP Long Liên', 'KV1'],
-    ['NPP Nguyên Vũ', 'KV1'],
-    ['NPP Thảo Nam', 'KV1'],
-    ['NPP Tuấn Huê', 'KV1'],
-    ['NPP Tuấn Yến', 'KV1'],
-    ['NPP Vũ Tấm', 'KV1'],
+async function initNPPKvMap() {
+    try {
+        const response = await fetch('https://openapi.mobiwork.vn/OpenAPI/V1/SaleGroup', {
+            headers: {
+                'accept': 'application/json',
+                'Authorization': 'Basic NjlhZTZlNmM4YTY0NjVmNDFlNTNhZmI0OjFuYzFnc3J1N2p2Ym10eTdncGV5NWk='
+            }
+        });
+        const result = await response.json();
+        if (!result.status || !result.data) {
+            throw new Error('Invalid API response');
+        }
 
-    ['NPP Duy Anh', 'KV2'],
-    ['NPP Hoa Việt', 'KV3'],
-    ['NPP Hùng Huệ', 'KV2'],
-    ['NPP Long Châm', 'KV2'],
-    ['NPP Ngọc Kiên', 'KV2'],
-    ['NPP Ngọc Thêu', 'KV2'],
-    ['NPP Phong Hiền', 'KV2'],
-    ['NPP Phúc Thịnh', 'KV3'],
-    ['NPP Phương Đông', 'KV2'],
-    ['NPP Thành Lụa', 'KV2'],
-    ['NPP Tuấn Huyền', 'KV2'],
+        const provinceToKv = {};
+        const nppToProvince = {};
 
-    ['NPP Bảo Cường', 'KV3'],
-    ['NPP Hikoji', 'KV3'],
-    ['NPP Long Hải', 'KV3'],
-    ['NPP Tân Hoa', 'KV3'],
-    ['NPP Tây Đô', 'KV3'],
-    ['NPP Thắng Lợi', 'KV3'],
-    ['NPP Thành Hân', 'KV3'],
-    ['NPP Tiến Thịnh', 'KV3'],
+        for (const item of result.data) {
+            if (item.loai_nhom === 'sale') {
+                nppToProvince[item.ma_nhom] = item.ma_nhom_cha;
+            } else if (item.ma_nhom_cha && /^KV\d+$/.test(item.ma_nhom_cha)) {
+                provinceToKv[item.ma_nhom] = item.ma_nhom_cha;
+            }
+        }
 
-    ['NPP Ánh Thu', 'KV4'],
-    ['NPP Đức Oanh', 'KV4'],
-    ['NPP Dương Minh', 'KV4'],
-    ['NPP Dũng Béo', 'KV4'],
-    ['NPP Hưng Thịnh', 'KV4'],
-    ['NPP Ngọc Phúc', 'KV4'],
-    ['NPP Nguyễn Đình Hân', 'KV4'],
-    ['NPP Tân Thuý', 'KV4'],
-    ['NPP Thăng Hương', 'KV4'],
-    ['NPP Thảo Thắng', 'KV4'],
-    ['NPP Tùng Phương', 'KV3'],
+        const entries = [];
+        for (const [npp, province] of Object.entries(nppToProvince)) {
+            if (provinceToKv[province]) {
+                entries.push([npp, provinceToKv[province]]);
+            }
+        }
 
-    ['NPP Đồng Lợi', 'KV5'],
-    ['NPP Anh Đức', 'KV5'],
-    ['NPP Hải Hằng', 'KV5'],
-    ['NPP Hiền Cường', 'KV5'],
-    ['NPP Hoàng Minh', 'KV5'],
-    ['NPP Oanh Định', 'KV5'],
-    ['NPP Sơn Lâm', 'KV5'],
-    ['NPP Thái Hoà', 'KV5'],
-    ['NPP Thảo Xuân', 'KV5'],
-    ['NPP Tiên Lan', 'KV5'],
-    ['NPP Duy Khoa', 'KV5'],
-    ['NPP Tuấn Vân', 'KV5'],
-    ['NPP Vũ Đức Nam', 'KV5'],
-
-    ['NPP Anh Minh HT', 'KV6'],
-    ['NPP Hà Thanh', 'KV6'],
-    ['NPP Hồng Đức', 'KV6'],
-    ['NPP Linh Trang', 'KV6'],
-    ['NPP Mạnh Hà 1', 'KV6'],
-    ['NPP Mạnh Hà 2', 'KV6'],
-    ['NPP Minh Châu', 'KV6'],
-    ['NPP Minh Lộc', 'KV6'],
-    ['NPP Nhung Tùng', 'KV6'],
-    ['NPP Phương Hà', 'KV6'],
-    ['NPP Tân Bích An', 'KV6'],
-    ['NPP Thanh Bình', 'KV6'],
-    ['NPP Thành Thanh', 'KV6'],
-    ['NPP Thông Thơm', 'KV6'],
-    ['NPP Trường Hằng', 'KV6'],
-
-    ['NPP Tâm Bảo Hân', 'KV7'],
-    ['NPP NAKOA', 'KV7'],
-    ['NPP Dương Thiên Nhi', 'KV7'],
-    ['NPP Tường Vy', 'KV7'],
-    ['NPP Minh Huy', 'KV7'],
-    ['NPP Hiền Thuận', 'KV7'],
-    ['NPP Thúy Diễm', 'KV7'],
-    ['NPP Anh Viên', 'KV7'],
-    ['NPP Hoàng Gia Bảo', 'KV7'],
-    ['NPP Trung Nam', 'KV7'],
-    ['NPP Nam Khánh', 'KV7'],
-    ['NPP Thanh Trà', 'KV7']
-
-]);
+        NPP_KV_MAP = new Map(entries);
+    } catch (error) {
+        console.error('Lỗi tải danh sách NPP:', error);
+        NPP_KV_MAP = new Map();
+    }
+}
 
 function getKVFromNPP(tenNPP) {
     if (!tenNPP) return 'Không xác định';
+    if (!NPP_KV_MAP) return 'Không xác định';
     return NPP_KV_MAP.get(tenNPP) || 'Không xác định';
 }
 
 function getNPPByKV(kv) {
+    if (!NPP_KV_MAP) return [];
     const result = [];
     NPP_KV_MAP.forEach((value, key) => {
         if (value === kv) {

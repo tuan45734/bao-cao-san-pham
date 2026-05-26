@@ -79,7 +79,8 @@ const App = {
         return this.NPP_NAME_MAPPING.get(tenNPP) || tenNPP;
     },
 
-    init() {
+    async init() {
+        await initNPPKvMap();
         console.log('App initialized');
         this.initAuth();
         
@@ -409,10 +410,12 @@ const App = {
         }
 
         const allowedKVs = kv === 'all' ? this.getAllowedKVsForRegion(this.currentRegion) : [kv];
-        const nppList = Array.from(NPP_KV_MAP.entries())
-            .filter(([, kvValue]) => allowedKVs.includes(kvValue))
-            .map(([npp]) => npp)
-            .sort();
+        const nppList = NPP_KV_MAP
+            ? Array.from(NPP_KV_MAP.entries())
+                .filter(([, kvValue]) => allowedKVs.includes(kvValue))
+                .map(([npp]) => npp)
+                .sort()
+            : [];
 
         if (nppList.length === 0) {
             const option = document.createElement('option');
@@ -508,7 +511,7 @@ const App = {
         } else if (this.currentNPP !== 'all') {
             Array.from(this.categoryNPPStats.entries()).forEach(([key, value]) => {
                 const [catName, npp] = key.split('_');
-                const nppKv = NPP_KV_MAP.get(npp);
+                const nppKv = getKVFromNPP(npp);
                 if (npp === this.currentNPP && (allowedKVs.length === 0 || allowedKVs.includes(nppKv))) {
                     if (filteredStats.has(catName)) {
                         const existing = filteredStats.get(catName);
@@ -565,7 +568,7 @@ const App = {
 
         if (this.currentNPP !== 'all') {
             Array.from(this.productNPPStats.values()).forEach(product => {
-                const productKv = product.kv || NPP_KV_MAP.get(product.npp);
+                const productKv = product.kv || getKVFromNPP(product.npp);
                 if (product.category === categoryName && product.npp === this.currentNPP && (allowedKVs.length === 0 || allowedKVs.includes(productKv))) {
                     filteredProducts.push(product);
                 }
@@ -912,8 +915,6 @@ const App = {
         document.getElementById('detailRevenueChartContainer').style.display = 'none';
         document.getElementById('detailQuantityChartContainer').style.display = 'none';
 
-        Utils.showLoading();
-
         try {
             const fromDateStr = Utils.formatDateForAPI(fromDate);
             const toDateStr = Utils.formatDateForAPI(toDate);
@@ -985,7 +986,6 @@ const App = {
             if (pageInfo) pageInfo.style.display = 'none';
         } finally {
             this.isFetching = false;
-            Utils.hideLoading();
             searchBtn.disabled = false;
             searchBtn.innerHTML = '<i class="fas fa-search"></i> Xem báo cáo';
         }

@@ -57,24 +57,6 @@ formatCases(cases) {
         }, 5000);
     },
 
-showLoading() {
-        const overlay = document.getElementById('loadingOverlay');
-        if (overlay) {
-            overlay.style.display = 'flex';
-        } else {
-            console.warn('loadingOverlay element not found');
-        }
-    },
-
-    hideLoading() {
-        const overlay = document.getElementById('loadingOverlay');
-        if (overlay) {
-            overlay.style.display = 'none';
-        } else {
-            console.warn('loadingOverlay element not found');
-        }
-    },
-
     validateDates(fromDate, toDate) {
         if (!fromDate || !toDate) {
             this.showError('Vui lòng chọn ngày!');
